@@ -6,6 +6,7 @@
   <title>Appointments | Shear Time</title>
   <link rel="stylesheet" href="style.css" />
   <style>
+    /* --- Page-specific styles --- */
     .month-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
     .month-btn{width:auto;padding:8px 10px}
     .cal{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
@@ -21,13 +22,22 @@
     .legend span{display:flex;align-items:center;gap:6px;font-size:.85em;color:#666}
     .dot{width:8px;height:8px;border-radius:50%;background:#b22222;display:inline-block}
     .bar{width:14px;height:4px;border-radius:2px;background:#9aa0a6;display:inline-block}
-    .list{margin-top:10px;text-align:left}
-    .card{border:1px solid #eee;border-radius:10px;padding:12px;margin:8px 0;background:#fff}
-    .row-sb{display:flex;justify-content:space-between;align-items:center;gap:8px}
-    .muted{color:#666}
+
+    /* Timeline */
+    .day-header{display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px}
+    .hours-card{border:1px solid #eee;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+    .slot{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid #f0f0f0}
+    .slot:first-child{border-top:none}
+    .slot-time{width:92px;flex:0 0 92px;color:#666;font-weight:600}
+    .slot-body{flex:1}
+    .slot.open{background:#fff;cursor:pointer}
+    .slot.open:hover{background:#fafafa}
+    .pill{display:inline-block;padding:6px 10px;border-radius:8px;font-size:.92em}
+    .pill-appt{background:#ffeaea;border:1px solid #f4b5b5;color:#8b0000}
+    .pill-block{background:#eef1f3;border:1px solid #d5dbe0;color:#333}
+
     .btn-row{display:flex;gap:10px;margin-top:10px}
     .btn-row .btn{flex:1}
-    .icon-btn{background:#ddd;color:#222;padding:6px 8px;border-radius:8px;font-size:.9em;width:auto}
 
     /* modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:50}
@@ -38,6 +48,10 @@
     .preset-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
     .preset-row button{background:#e9ecef;color:#333}
     .preset-row button:hover{background:#dfe4ea}
+
+    .wh-card{border:1px solid #eee;background:#fff;border-radius:10px;padding:10px;margin-top:12px}
+    .wh-row{display:flex;gap:8px}
+    .wh-row select{width:100%}
   </style>
 </head>
 <body>
@@ -65,7 +79,7 @@
 
     <div class="legend">
       <span><span class="dot"></span> appointment</span>
-      <span><span class="bar"></span> blocked time</span>
+      <span><span class="bar"></span> blocked</span>
       <span>red outline = today</span>
     </div>
 
@@ -74,11 +88,33 @@
       <button class="btn" id="openBlock">Block Time</button>
     </div>
 
-    <h3 style="text-align:left;margin:16px 0 8px" id="listTitle">Your Appointments</h3>
-    <div class="list" id="apptList"></div>
-    <div class="list-empty" id="emptyList" style="display:none">Nothing scheduled for this date.</div>
+    <!-- Working hours -->
+    <div class="wh-card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <strong>Working Hours</strong>
+        <button class="btn" id="saveHours" style="width:auto;padding:8px 10px">Save</button>
+      </div>
+      <div class="wh-row" style="margin-top:8px">
+        <div>
+          <label for="startHour" style="margin:0;font-weight:600">Start</label>
+          <select id="startHour"></select>
+        </div>
+        <div>
+          <label for="endHour" style="margin:0;font-weight:600">End</label>
+          <select id="endHour"></select>
+        </div>
+      </div>
+      <div class="muted" id="hoursHint" style="margin-top:6px"></div>
+    </div>
 
-    <button class="btn" onclick="window.location.href='dashboard.html'" style="margin-top:14px">Back to Dashboard</button>
+    <!-- Day/timeline header -->
+    <div class="day-header">
+      <h3 id="listTitle" style="margin:16px 0 8px">Day View</h3>
+      <button class="btn" onclick="window.location.href='dashboard.html'" style="width:auto;padding:8px 10px">Dashboard</button>
+    </div>
+
+    <!-- Hourly timeline (30-min slots) -->
+    <div class="hours-card" id="timeline"></div>
   </div>
 
   <!-- Block time modal -->
@@ -137,13 +173,14 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
+    // UI refs
     const monthTitle = document.getElementById("monthTitle");
     const calBody = document.getElementById("calBody");
-    const apptList = document.getElementById("apptList");
-    const emptyList = document.getElementById("emptyList");
     const addApptBtn = document.getElementById("addAppt");
     const prevBtn = document.getElementById("prevMonth");
     const nextBtn = document.getElementById("nextMonth");
+    const listTitle = document.getElementById("listTitle");
+    const timeline = document.getElementById("timeline");
 
     const blockModal = document.getElementById("blockModal");
     const openBlockBtn = document.getElementById("openBlock");
@@ -157,25 +194,35 @@
     const presetEvening = document.getElementById("presetEvening");
     const presetFull = document.getElementById("presetFull");
 
+    const startHourSel = document.getElementById("startHour");
+    const endHourSel   = document.getElementById("endHour");
+    const saveHoursBtn = document.getElementById("saveHours");
+    const hoursHint    = document.getElementById("hoursHint");
+
+    // State
     let uid = null;
     let current = new Date();
     let selectedDate = new Date();
 
-    let appts = {};         // id -> item
-    let blocks = {};        // id -> item
-    let apptsByDay = {};    // YYYY-MM-DD -> [ids]
-    let blocksByDay = {};   // YYYY-MM-DD -> [ids]
+    let appts = {};      // id -> {clientName, service, date}
+    let blocks = {};     // id -> {type, startISO, endISO}
+    let apptsByDay = {}; // YYYY-MM-DD -> [ids]
+    let blocksByDay = {}; // YYYY-MM-DD -> [ids]
+
+    const APPT_SLOT_MIN = 30; // assumed appointment slot length for timeline
 
     function pad(n){ return n.toString().padStart(2,"0"); }
     function ymd(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+    function toMinutes(hhmm){ const [H,M] = hhmm.split(":").map(Number); return H*60+M; }
 
     function parseLegacyDate(str){
       // supports "YYYY-MM-DD HH:MM AM/PM" or ISO
       if(!str) return null;
       if(str.includes("AM") || str.includes("PM")){
-        const [datePart, timePart, ampm] = str.split(/[\s]/).filter(Boolean);
-        const [yyyy, mm, dd] = datePart.split("-").map(Number);
-        let [hh, mi] = timePart.split(":").map(Number);
+        const parts = str.split(" ");
+        const [yyyy, mm, dd] = parts[0].split("-").map(Number);
+        let [hh, mi] = parts[1].split(":").map(Number);
+        const ampm = parts[2];
         if (ampm === "PM" && hh !== 12) hh += 12;
         if (ampm === "AM" && hh === 12) hh = 0;
         return new Date(yyyy, mm-1, dd, hh, mi);
@@ -184,10 +231,10 @@
     }
 
     function fmtHuman(d){
-      const opts = { month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit" };
-      return new Intl.DateTimeFormat(undefined, opts).format(d);
+      return d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
     }
 
+    // Build selects
     function buildTimeList(select){
       select.innerHTML = "";
       for(let h=6; h<=21; h++){
@@ -201,7 +248,19 @@
         }
       }
     }
+    function buildHourSelects(){
+      startHourSel.innerHTML = ""; endHourSel.innerHTML = "";
+      for(let h=5; h<=22; h++){
+        const d = new Date(2000,0,1,h,0);
+        const label = d.toLocaleTimeString([], {hour:"numeric"});
+        const o1 = document.createElement("option");
+        o1.value = h; o1.textContent = label; startHourSel.appendChild(o1);
+        const o2 = document.createElement("option");
+        o2.value = h; o2.textContent = label; endHourSel.appendChild(o2);
+      }
+    }
     buildTimeList(blkTime);
+    buildHourSelects();
 
     function resetMaps(){
       apptsByDay = {};
@@ -223,7 +282,7 @@
 
     function isFullDayBlock(b){
       const s = new Date(b.startISO), e = new Date(b.endISO);
-      return s.getHours()===0 && s.getMinutes()===0 && (e.getHours()===23 || e.getHours()===24) && e.getMinutes()>=59;
+      return s.getHours()===0 && s.getMinutes()===0 && (e.getHours()>=23) && e.getMinutes()>=59;
     }
 
     function renderCalendar(){
@@ -259,7 +318,7 @@
 
         cell.addEventListener("click", ()=>{
           selectedDate = dateObj;
-          renderDayList();
+          renderTimeline();
         });
 
         row.appendChild(cell);
@@ -274,119 +333,220 @@
       }
     }
 
-    function renderDayList(){
+    function minutesSinceMidnight(d){
+      return d.getHours()*60 + d.getMinutes();
+    }
+
+    function slotLabels(startHour, endHour){
+      const labels = [];
+      for(let h=startHour; h<endHour; h++){
+        for(const m of [0,30]){
+          const d = new Date(2000,0,1,h,m);
+          labels.push(d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})); // "9:30 AM"
+        }
+      }
+      // include endHour :00
+      const end = new Date(2000,0,1,endHour,0);
+      labels.push(end.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}));
+      return labels;
+    }
+
+    function renderTimeline(){
       const key = ymd(selectedDate);
-      const idsA = (apptsByDay[key]||[]);
-      const idsB = (blocksByDay[key]||[]);
-      const day = new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(selectedDate);
-      document.getElementById("listTitle").textContent = `Schedule for ${day}`;
+      const dayApptIds = apptsByDay[key] || [];
+      const dayBlockIds = blocksByDay[key] || [];
 
-      apptList.innerHTML = "";
-      let any = false;
+      // load working hours from profile (already fetched into selects)
+      const startH = parseInt(startHourSel.value, 10) || 8;
+      const endH   = parseInt(endHourSel.value, 10) || 20;
+      hoursHint.textContent = `Showing ${new Date(2000,0,1,startH,0).toLocaleTimeString([], {hour:"numeric"})} – ${new Date(2000,0,1,endH,0).toLocaleTimeString([], {hour:"numeric"})}`;
 
-      // Blocks first
-      idsB.map(id=>blocks[id]).sort((a,b)=>new Date(a.startISO)-new Date(b.startISO)).forEach(b=>{
-        any = true;
-        const div = document.createElement("div");
-        div.className = "card";
-        const s = new Date(b.startISO), e = new Date(b.endISO);
-        const label = isFullDayBlock(b) ? "Full Day Off" : `${s.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})} – ${e.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}`;
-        div.innerHTML = `
-          <div class="row-sb">
-            <div><strong>Blocked</strong> <span class="muted">(${b.type||'custom'})</span><br>${label}</div>
-            <button class="icon-btn" data-del-block="${b._id}">🗑</button>
-          </div>`;
-        apptList.appendChild(div);
+      listTitle.textContent = new Intl.DateTimeFormat(undefined,{weekday:'short', month:'short', day:'numeric', year:'numeric'}).format(selectedDate);
+
+      // Prepare blocked ranges for this day
+      const ranges = dayBlockIds.map(id => {
+        const b = blocks[id];
+        const s = new Date(b.startISO);
+        const e = new Date(b.endISO);
+        return { b, s, e };
       });
 
-      // Appointments
-      idsA.map(id=>({id, item:appts[id]}))
-          .sort((a,b)=>parseLegacyDate(a.item.date)-parseLegacyDate(b.item.date))
-          .forEach(({id, item})=>{
-        any = true;
-        const when = parseLegacyDate(item.date);
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `
-          <div class="row-sb">
-            <div>
-              <strong>${item.clientName || 'Client'}</strong>
-              <div class="muted">${item.service || ''}</div>
-            </div>
-            <div style="text-align:right">
-              ${when ? when.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}) : ''}
-              <div><button class="icon-btn" data-del-appt="${id}">🗑</button></div>
-            </div>
-          </div>`;
-        apptList.appendChild(div);
+      // Prepare appointments at 30-min resolution (assume APPT_SLOT_MIN)
+      const apptMap = {}; // "HH:MM" 24h -> item
+      dayApptIds.forEach(id=>{
+        const it = appts[id];
+        const dt = parseLegacyDate(it.date);
+        if(!dt) return;
+        const hhmm = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        apptMap[hhmm] = { id, it, dt };
       });
 
-      emptyList.style.display = any ? "none" : "block";
+      // Build slots
+      const labels = slotLabels(startH, endH);
+      timeline.innerHTML = "";
+      labels.forEach(label=>{
+        // convert label to 24h "HH:MM"
+        const probe = new Date(`2000-01-01 ${label}`);
+        const hhmm = `${pad(probe.getHours())}:${pad(probe.getMinutes())}`;
 
-      // Wire delete buttons
-      apptList.querySelectorAll("[data-del-appt]").forEach(btn=>{
-        btn.addEventListener("click", async ()=>{
-          const id = btn.getAttribute("data-del-appt");
-          if(confirm("Delete this appointment?")){
-            await remove(ref(db, `users/${uid}/appointments/${id}`));
-          }
-        });
-      });
-      apptList.querySelectorAll("[data-del-block]").forEach(btn=>{
-        btn.addEventListener("click", async ()=>{
-          const id = btn.getAttribute("data-del-block");
-          if(confirm("Remove this blocked time?")){
-            await remove(ref(db, `users/${uid}/blockedTimes/${id}`));
-          }
-        });
+        // anchor to selected date
+        const slotStart = new Date(`${key}T${hhmm}:00`);
+        const slotEnd   = new Date(slotStart.getTime() + 30*60000);
+
+        // check blocked overlap
+        const blocking = ranges.find(r => slotStart < r.e && slotEnd > r.s);
+
+        // check appointment
+        const appt = apptMap[hhmm];
+
+        const row = document.createElement("div");
+        row.className = "slot" + (!blocking && !appt ? " open" : "");
+        const timeCol = document.createElement("div");
+        timeCol.className = "slot-time";
+        timeCol.textContent = label;
+        const body = document.createElement("div");
+        body.className = "slot-body";
+
+        if (appt){
+          const pill = document.createElement("span");
+          pill.className = "pill pill-appt";
+          pill.textContent = `${appt.it.clientName || 'Client'} — ${appt.it.service || ''} @ ${label}`;
+          body.appendChild(pill);
+
+          // delete button
+          const del = document.createElement("button");
+          del.className = "btn";
+          del.style.width = "auto"; del.style.padding = "6px 10px"; del.style.marginLeft = "8px";
+          del.textContent = "Delete";
+          del.addEventListener("click", async (e)=>{
+            e.stopPropagation();
+            if(confirm("Delete this appointment?")){
+              await remove(ref(db, `users/${uid}/appointments/${appt.id}`));
+            }
+          });
+          body.appendChild(del);
+        } else if (blocking){
+          const pill = document.createElement("span");
+          pill.className = "pill pill-block";
+          const labelTxt = (blocking.b.type==="full") ? "Full Day Off" :
+            `${blocking.s.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})} – ${blocking.e.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}`;
+          pill.textContent = `Blocked • ${labelTxt}`;
+          body.appendChild(pill);
+
+          const del = document.createElement("button");
+          del.className = "btn";
+          del.style.width = "auto"; del.style.padding = "6px 10px"; del.style.marginLeft = "8px";
+          del.textContent = "Remove";
+          del.addEventListener("click", async (e)=>{
+            e.stopPropagation();
+            // find the exact block id (by strict match)
+            const blockId = (blocksByDay[key]||[]).find(id=>{
+              const b = blocks[id];
+              return new Date(b.startISO).getTime() === blocking.s.getTime() && new Date(b.endISO).getTime() === blocking.e.getTime();
+            }) || (dayBlockIds[0] || null);
+            if(blockId && confirm("Remove this blocked time?")){
+              await remove(ref(db, `users/${uid}/blockedTimes/${blockId}`));
+            }
+          });
+          body.appendChild(del);
+        } else {
+          body.textContent = "Available — tap to book";
+          row.addEventListener("click", ()=>{
+            const human = probe.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+            window.location.href = `book.html?barber=${encodeURIComponent(uid)}&date=${encodeURIComponent(key)}&time=${encodeURIComponent(human)}`;
+          });
+        }
+
+        row.appendChild(timeCol);
+        row.appendChild(body);
+        timeline.appendChild(row);
       });
     }
 
     function rebuildAll(){
-      resetMaps();
+      // Calendar indicators need grouped maps
+      apptsByDay = {}; blocksByDay = {};
+      Object.keys(appts).forEach(id=>{
+        const d = parseLegacyDate(appts[id].date);
+        if(!d) return;
+        const k = ymd(d);
+        (apptsByDay[k] ||= []).push(id);
+      });
+      Object.keys(blocks).forEach(id=>{
+        const s = new Date(blocks[id].startISO);
+        const k = ymd(s);
+        (blocksByDay[k] ||= []).push(id);
+      });
+
       renderCalendar();
-      renderDayList();
+      renderTimeline();
     }
 
-    // Load data live
+    // Subscriptions
     function liveSubscribe(){
       onValue(ref(db, `users/${uid}/appointments`), (snap)=>{
         appts = {};
         if(snap.exists()){
-          const val = snap.val();
-          for(const id in val) appts[id] = val[id];
+          const v = snap.val();
+          for(const id in v) appts[id] = v[id];
         }
         rebuildAll();
       });
       onValue(ref(db, `users/${uid}/blockedTimes`), (snap)=>{
         blocks = {};
         if(snap.exists()){
-          const val = snap.val();
-          for(const id in val) blocks[id] = {...val[id], _id:id};
+          const v = snap.val();
+          for(const id in v) blocks[id] = v[id];
         }
         rebuildAll();
+      });
+      onValue(ref(db, `users/${uid}/profile`), (snap)=>{
+        // working hours
+        let startH = 8, endH = 20;
+        if(snap.exists()){
+          const p = snap.val();
+          if(Number.isInteger(p.startHour)) startH = p.startHour;
+          if(Number.isInteger(p.endHour))   endH = p.endHour;
+        }
+        startHourSel.value = startH;
+        endHourSel.value = endH;
+        renderTimeline();
       });
     }
 
     // Month nav
-    document.getElementById("prevMonth").addEventListener("click", ()=>{ current.setMonth(current.getMonth()-1); renderCalendar(); });
-    document.getElementById("nextMonth").addEventListener("click", ()=>{ current.setMonth(current.getMonth()+1); renderCalendar(); });
+    prevBtn.addEventListener("click", ()=>{ current.setMonth(current.getMonth()-1); renderCalendar(); });
+    nextBtn.addEventListener("click", ()=>{ current.setMonth(current.getMonth()+1); renderCalendar(); });
 
-    // Add appointment → booking page
-    addApptBtn.addEventListener("click", ()=>{ if(uid) window.location.href = `book.html?barber=${encodeURIComponent(uid)}`; });
+    // Working hours save
+    saveHoursBtn.addEventListener("click", async ()=>{
+      const s = parseInt(startHourSel.value,10);
+      const e = parseInt(endHourSel.value,10);
+      if(!(s>=0 && e>0 && e>s)){ alert("Please pick valid hours (end after start)."); return; }
+      await set(ref(db, `users/${uid}/profile/startHour`), s);
+      await set(ref(db, `users/${uid}/profile/endHour`), e);
+      renderTimeline();
+      alert("Working hours saved.");
+    });
 
-    // Modal handlers
+    // Add appointment → booking link
+    addApptBtn.addEventListener("click", ()=>{
+      if(!uid) return;
+      const key = ymd(selectedDate);
+      window.location.href = `book.html?barber=${encodeURIComponent(uid)}&date=${encodeURIComponent(key)}`;
+    });
+
+    // Block modal
     function openModal(){
       const today = new Date();
       blkDate.value = ymd(selectedDate || today);
       blockModal.style.display = "flex";
     }
     function closeModal(){ blockModal.style.display = "none"; }
-
     openBlockBtn.addEventListener("click", openModal);
     cancelBlock.addEventListener("click", closeModal);
 
-    function saveCustomBlock(typeOverride=null){
+    async function saveBlockType(typeOverride=null){
       const date = blkDate.value;
       if(!date){ alert("Pick a date"); return; }
 
@@ -408,7 +568,6 @@
         end   = new Date(`${date}T21:00:00`);
         type = "evening";
       } else {
-        // custom range
         const [H,M] = (blkTime.value || "09:00").split(":").map(Number);
         const dur = parseInt(blkDur.value,10) || 60;
         start = new Date(`${date}T${pad(H)}:${pad(M)}:00`);
@@ -416,20 +575,19 @@
         type = "custom";
       }
 
-      return push(ref(db, `users/${uid}/blockedTimes`), {
+      await push(ref(db, `users/${uid}/blockedTimes`), {
         type, startISO: start.toISOString(), endISO: end.toISOString(),
         createdAt: new Date().toISOString()
       });
     }
 
-    // Save block button = custom by default
     saveBlock.addEventListener("click", async ()=>{
-      try{ await saveCustomBlock(); closeModal(); } catch(e){ alert("Couldn't save block."); }
+      try{ await saveBlockType(); closeModal(); } catch(e){ alert("Couldn't save block."); }
     });
-    presetMorning.addEventListener("click", async ()=>{ try{ await saveCustomBlock("morning"); closeModal(); }catch(e){ alert("Error"); }});
-    presetAfternoon.addEventListener("click", async ()=>{ try{ await saveCustomBlock("afternoon"); closeModal(); }catch(e){ alert("Error"); }});
-    presetEvening.addEventListener("click", async ()=>{ try{ await saveCustomBlock("evening"); closeModal(); }catch(e){ alert("Error"); }});
-    presetFull.addEventListener("click", async ()=>{ try{ await saveCustomBlock("full"); closeModal(); }catch(e){ alert("Error"); }});
+    presetMorning.addEventListener("click", async ()=>{ try{ await saveBlockType("morning"); closeModal(); }catch(e){ alert("Error"); }});
+    presetAfternoon.addEventListener("click", async ()=>{ try{ await saveBlockType("afternoon"); closeModal(); }catch(e){ alert("Error"); }});
+    presetEvening.addEventListener("click", async ()=>{ try{ await saveBlockType("evening"); closeModal(); }catch(e){ alert("Error"); }});
+    presetFull.addEventListener("click", async ()=>{ try{ await saveBlockType("full"); closeModal(); }catch(e){ alert("Error"); }});
 
     // Auth + init
     onAuthStateChanged(auth, (user)=>{
