@@ -5,11 +5,111 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Book Appointment | Shear Time</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* --- Simple mobile layout fix --- */
+    body {
+      background: #f3f3f3;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 55px;
+      background: #b22222;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2em;
+      z-index: 10;
+    }
+
+    .header-logo {
+      width: 30px;
+      margin-right: 8px;
+    }
+
+    .container {
+      margin-top: 80px;
+      width: 95%;
+      max-width: 380px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    img {
+      width: 70px;
+      margin-bottom: 8px;
+    }
+
+    label {
+      display: block;
+      text-align: left;
+      font-weight: bold;
+      color: #333;
+      margin-top: 8px;
+      font-size: 0.9em;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95em;
+    }
+
+    button {
+      width: 100%;
+      background-color: #b22222;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1em;
+      margin-top: 14px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #8b1a1a;
+    }
+
+    .success, .error {
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 0.9em;
+      display: none;
+    }
+
+    .success {
+      background: #c9f7c2;
+      color: #155724;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+  </style>
 </head>
 <body>
   <header class="app-header">
     <img src="shear-time-logo.png" alt="Logo" class="header-logo" />
-    <h1 class="header-title">Shear Time</h1>
+    Shear Time
   </header>
 
   <div class="container">
@@ -41,7 +141,6 @@
     <div class="error" id="errorMsg">❌ Something went wrong. Please try again.</div>
   </div>
 
-  <!-- ✅ Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getDatabase, ref, push, get, child } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
@@ -70,16 +169,16 @@
     const dateInput = document.getElementById("date");
     const timeSelect = document.getElementById("time");
 
-    // --- Date + Time Picker Setup ---
+    // --- Set Minimum Date ---
     const today = new Date().toISOString().split("T")[0];
     dateInput.min = today;
 
-    // Generate 30-minute time slots between 9 AM and 6 PM
+    // --- Generate Time Slots (9 AM - 6 PM every 30 min) ---
     for (let hour = 9; hour <= 18; hour++) {
       const hourLabel = hour > 12 ? hour - 12 : hour;
       const ampm = hour >= 12 ? "PM" : "AM";
-      const slot1 = `${hourLabel.toString().padStart(2,"0")}:00 ${ampm}`;
-      const slot2 = `${hourLabel.toString().padStart(2,"0")}:30 ${ampm}`;
+      const slot1 = `${hourLabel.toString().padStart(2, "0")}:00 ${ampm}`;
+      const slot2 = `${hourLabel.toString().padStart(2, "0")}:30 ${ampm}`;
       if (hour < 18) {
         [slot1, slot2].forEach((slot) => {
           const opt = document.createElement("option");
@@ -95,12 +194,12 @@
       }
     }
 
+    // --- Load Barber Profile ---
     if (!barberId) {
       barberNameEl.textContent = "Invalid Barber Link";
       bookingForm.style.display = "none";
     } else {
       const dbRef = ref(db);
-      // Load barber name + shop
       get(child(dbRef, "users/" + barberId + "/profile")).then((snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
@@ -110,7 +209,7 @@
         }
       });
 
-      // Load available services
+      // --- Load Services ---
       get(child(dbRef, "users/" + barberId + "/services")).then((snapshot) => {
         serviceSelect.innerHTML = "";
         if (snapshot.exists()) {
@@ -122,11 +221,13 @@
             serviceSelect.appendChild(option);
           });
         } else {
-          serviceSelect.innerHTML = "<option value=''>No services available yet</option>";
+          serviceSelect.innerHTML =
+            "<option value=''>No services available yet</option>";
         }
       });
     }
 
+    // --- Handle Booking Submission ---
     bookingForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       successMsg.style.display = "none";
@@ -138,7 +239,7 @@
       const time = document.getElementById("time").value;
       const datetime = `${date} ${time}`;
 
-      if (!barberId || !clientName || !service || !datetime) {
+      if (!barberId || !clientName || !service || !date || !time) {
         errorMsg.style.display = "block";
         errorMsg.textContent = "❌ Please fill in all fields.";
         return;
