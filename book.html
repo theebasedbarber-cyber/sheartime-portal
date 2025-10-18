@@ -60,6 +60,8 @@
 
     const params = new URLSearchParams(window.location.search);
     const barberId = params.get("barber");
+    const pfDate = params.get("date");
+    const pfTime = params.get("time");
 
     const barberNameEl = document.getElementById("barberName");
     const serviceSelect = document.getElementById("service");
@@ -75,21 +77,21 @@
     function pad(n){ return n.toString().padStart(2,"0"); }
     function buildAllTimeSlots(){
       const slots = [];
-      for(let h=9; h<=18; h++){
+      for(let h=6; h<=21; h++){
         for(let m of [0,30]){
           const d = new Date(2000,0,1,h,m);
-          slots.push(d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})); // "9:00 AM"
+          slots.push(d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}));
         }
       }
       return slots;
     }
-    function to24h(label){ // "3:30 PM" -> "15:30"
+    function to24h(label){
       const d = new Date(`2000-01-01 ${label}`);
       return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
     function toMinutes(hhmm){ const [H,M] = hhmm.split(":").map(Number); return H*60+M; }
 
-    let blocked = []; // array of {startISO, endISO}
+    let blocked = [];
     function loadBlockedForBarber(){
       if(!barberId) return;
       onValue(ref(db, `users/${barberId}/blockedTimes`), (snap)=>{
@@ -105,27 +107,22 @@
     function refreshTimeOptions(){
       const date = dateInput.value;
       timeSelect.innerHTML = `<option value="">Select Time</option>`;
-      if(!date){ return; }
+      if(!date) return;
 
-      // All 30-min slots 9AM–6PM
-      const all = buildAllTimeSlots(); // labels like "9:00 AM"
-      // Remove those that fall inside any block for the chosen date
+      const all = buildAllTimeSlots();
       const dayBlockedRanges = blocked
         .map(b=>({s:new Date(b.startISO), e:new Date(b.endISO)}))
         .filter(r => r.s.toISOString().slice(0,10) === date || r.e.toISOString().slice(0,10) === date);
 
       const allowed = all.filter(label=>{
-        const hhmm = to24h(label);        // "15:30"
-        const mins = toMinutes(hhmm);     // 930
-        // slot time anchored to chosen date
+        const hhmm = to24h(label);
         const slotStart = new Date(`${date}T${hhmm}:00`);
-        const inBlocked = dayBlockedRanges.some(r => slotStart >= r.s && slotStart < r.e);
-        return !inBlocked;
+        const slotEnd = new Date(slotStart.getTime() + 30*60000);
+        return !dayBlockedRanges.some(r => slotStart < r.e && slotEnd > r.s);
       });
 
       if(!allowed.length){
         const opt = document.createElement("option");
-        opt.value = "";
         opt.textContent = "No times available";
         timeSelect.appendChild(opt);
         return;
@@ -136,6 +133,12 @@
         opt.textContent = label;
         timeSelect.appendChild(opt);
       });
+
+      // If prefilled time exists, auto-select it after options are built
+      if (pfTime){
+        const opt = Array.from(timeSelect.options).find(o => o.textContent === pfTime || o.value === pfTime);
+        if(opt) timeSelect.value = opt.value;
+      }
     }
 
     dateInput.addEventListener("change", refreshTimeOptions);
@@ -145,32 +148,44 @@
       bookingForm.style.display = "none";
     } else {
       const dbRef = ref(db);
-      get(child(dbRef, "users/" + barberId + "/profile")).then((snapshot) => {
-        if (snapshot.exists()) {
+      get(child(dbRef, `users/${barberId}/profile`)).then((snapshot)=>{
+        if(snapshot.exists()){
           const data = snapshot.val();
           barberNameEl.textContent = data.name
             ? `${data.name} @ ${data.shopName || "Shear Time"}`
             : "Shear Time Barber";
         }
       });
-      get(child(dbRef, "users/" + barberId + "/services")).then((snapshot) => {
+      get(child(dbRef, `users/${barberId}/services`)).then((snapshot)=>{
         serviceSelect.innerHTML = "";
-        if (snapshot.exists()) {
+        if(snapshot.exists()){
           const services = snapshot.val();
-          Object.values(services).forEach((s) => {
-            const option = document.createElement("option");
-            option.value = s.name;
-            option.textContent = `${s.name} - $${s.price}`;
-            serviceSelect.appendChild(option);
+          Object.values(services).forEach(s=>{
+            const opt = document.createElement("option");
+            opt.value = s.name;
+            opt.textContent = `${s.name} - $${s.price}`;
+            serviceSelect.appendChild(opt);
           });
         } else {
-          serviceSelect.innerHTML = "<option value=''>No services available yet</option>";
+          serviceSelect.innerHTML = "<option>No services available</option>";
         }
       });
       loadBlockedForBarber();
     }
 
-    bookingForm.addEventListener("submit", async (e) => {
+    // Prefill date/time from URL
+    if (pfDate) dateInput.value = pfDate;
+    const tryPrefill = setInterval(()=>{
+      if(timeSelect.options.length > 1){
+        if (pfTime){
+          const opt = Array.from(timeSelect.options).find(o => o.textContent === pfTime || o.value === pfTime);
+          if(opt) timeSelect.value = opt.value;
+        }
+        clearInterval(tryPrefill);
+      }
+    }, 150);
+
+    bookingForm.addEventListener("submit", async (e)=>{
       e.preventDefault();
       successMsg.style.display = "none";
       errorMsg.style.display = "none";
@@ -181,20 +196,20 @@
       const time = timeSelect.value;
       const datetime = `${date} ${time}`;
 
-      if (!barberId || !clientName || !service || !date || !time) {
+      if(!barberId || !clientName || !service || !date || !time){
         errorMsg.style.display = "block";
         errorMsg.textContent = "❌ Please fill in all fields.";
         return;
       }
 
-      try {
-        await push(ref(db, "users/" + barberId + "/appointments"), {
+      try{
+        await push(ref(db, `users/${barberId}/appointments`), {
           clientName, service, date: datetime, createdAt: new Date().toISOString()
         });
         successMsg.style.display = "block";
         bookingForm.reset();
         refreshTimeOptions();
-      } catch (err) {
+      }catch(err){
         console.error(err);
         errorMsg.style.display = "block";
       }
@@ -202,3 +217,5 @@
   </script>
 </body>
 </html>
+
+ 
