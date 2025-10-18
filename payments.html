@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shear Time | Payments</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .container {
+      max-width: 650px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #8b0000;
+      margin-bottom: 20px;
+    }
+
+    .summary {
+      background: #b22222;
+      color: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    .appointment-item {
+      background: #f7f7f7;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    .appointment-item strong {
+      color: #b22222;
+    }
+
+    .btn {
+      background-color: #b22222;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .btn:hover {
+      background-color: #8b1a1a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" width="80" />
+    <h2>Payments</h2>
+
+    <div class="summary" id="totalEarnings">
+      Total Earnings: $0.00
+    </div>
+
+    <div id="paymentList"></div>
+
+    <button class="btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+  </div>
+
+  <!-- ✅ Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
+      authDomain: "shear-time-portal.firebaseapp.com",
+      databaseURL: "https://shear-time-portal-default-rtdb.firebaseio.com/",
+      projectId: "shear-time-portal",
+      storageBucket: "shear-time-portal.firebasestorage.app",
+      messagingSenderId: "65107230915",
+      appId: "1:65107230915:web:4cdcd3b070744c22ef1ba76"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const totalEarningsEl = document.getElementById("totalEarnings");
+    const paymentList = document.getElementById("paymentList");
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loadPayments(user.uid);
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    function loadPayments(userId) {
+      const apptRef = ref(db, "users/" + userId + "/appointments");
+      const serviceRef = ref(db, "users/" + userId + "/services");
+
+      let services = {};
+
+      // Load services first (for price mapping)
+      onValue(serviceRef, (serviceSnap) => {
+        services = serviceSnap.val() || {};
+        // Then load appointments and calculate earnings
+        onValue(apptRef, (snap) => {
+          const appts = snap.val();
+          paymentList.innerHTML = "";
+          let total = 0;
+          if (appts) {
+            Object.keys(appts).forEach((id) => {
+              const appt = appts[id];
+              const matchedService = Object.values(services).find(s => s.name === appt.service);
+              const price = matchedService ? matchedService.price : 0;
+              total += price;
+
+              const div = document.createElement("div");
+              div.className = "appointment-item";
+              div.innerHTML = `
+                <strong>${appt.clientName}</strong> - ${appt.service}<br>
+                <span>Date:</span> ${appt.date}<br>
+                <span>Price:</span> $${price.toFixed(2)}
+              `;
+              paymentList.appendChild(div);
+            });
+          } else {
+            paymentList.innerHTML = "<p>No payment records found.</p>";
+          }
+          totalEarningsEl.textContent = `Total Earnings: $${total.toFixed(2)}`;
+        });
+      });
+    }
+  </script>
+</body>
+</html>
