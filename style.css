@@ -1,0 +1,79 @@
+/* ===== Shear Time Global Styles ===== */
+
+body {
+  background-color: #fafafa;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #222;
+}
+
+/* ---------- Containers ---------- */
+.container,
+.auth-container,
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  max-width: 420px;
+  margin: 60px auto;
+  text-align: center;
+}
+
+/* ---------- Logo ---------- */
+.logo {
+  width: 100px;
+  margin-bottom: 15px;
+}
+
+/* ---------- Headings ---------- */
+h1,
+h2 {
+  color: #b22222; /* Shear Time red */
+  margin-bottom: 20px;
+}
+
+/* ---------- Inputs ---------- */
+input,
+select {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+/* ---------- Buttons ---------- */
+button,
+a.btn {
+  background-color: #b22222;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.2s ease-in-out;
+}
+
+button:hover,
+a.btn:hover {
+  background-color: #8b1a1a;
+}
+
+/* ---------- Utility ---------- */
+.forgot-password {
+  margin-top: 15px;
+  display: block;
+  color: #b22222;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
