@@ -1,82 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shear Time Barber Portal</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="container">
-    <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo" />
-    <h2>Shear Time Barber Portal</h2>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    setPersistence,
+    browserLocalPersistence,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
-    <div class="form-container">
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
+  // ✅ Correct Firebase project (same as dashboard & appointments)
+  const firebaseConfig = {
+    apiKey: "AIzaSyATJ7J9wig1gcQPtc5PgwiU1krP8cs_Tj-M",
+    authDomain: "shear-time-86b38.firebaseapp.com",
+    projectId: "shear-time-86b38",
+    storageBucket: "shear-time-86b38.firebasestorage.app",
+    messagingSenderId: "335604759855",
+    appId: "1:335604759855:web:03ea774f849224e63575da"
+  };
 
-      <button id="loginBtn" class="btn">Login</button>
-      <button id="signupBtn" class="btn secondary">Create Account</button>
-    </div>
-  </div>
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-  <footer>© 2025 Shear Time | All rights reserved</footer>
+  // Keep session between reloads
+  await setPersistence(auth, browserLocalPersistence);
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      setPersistence,
-      browserLocalPersistence,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+  // If already logged in, send straight to dashboard
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("Already signed in:", user.email);
+      window.location.href = "dashboard.html";
+    }
+  });
 
-    // ✅ Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
-      authDomain: "shear-time-portal.firebaseapp.com",
-      projectId: "shear-time-portal",
-      storageBucket: "shear-time-portal.firebasestorage.app",
-      messagingSenderId: "65107230915",
-      appId: "1:65107230915:web:4dcd3b07074c22ef1ba76"
-    };
+  // Handle Login
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      alert("Login successful!");
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      alert("Error: " + err.message);
+      console.error(err);
+    }
+  });
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    await setPersistence(auth, browserLocalPersistence);
-
-    // ✅ Redirect if already logged in
-    onAuthStateChanged(auth, (user) => {
-      if (user) window.location.href = "dashboard.html";
-    });
-
-    // ✅ Login
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        alert("Login successful!");
-        window.location.href = "dashboard.html";
-      } catch (error) {
-        alert(error.message);
-      }
-    });
-
-    // ✅ Sign Up
-    document.getElementById("signupBtn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert("Account created successfully!");
-        window.location.href = "dashboard.html";
-      } catch (error) {
-        alert(error.message);
-      }
-    });
-  </script>
-</body>
-</html>
+  // Handle Signup
+  document.getElementById("signupBtn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      alert("Account created successfully!");
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      alert("Error: " + err.message);
+      console.error(err);
+    }
+  });
+</script>
