@@ -3,117 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shear Time | Barber Dashboard</title>
+  <title>Dashboard | Shear Time</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    body {
-      background-color: #f3f3f3;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    .dashboard {
-      max-width: 700px;
-      margin: 60px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-
-    .logo {
-      width: 90px;
-      margin-bottom: 10px;
-    }
-
-    h2 {
-      color: #8b0000;
-      margin-bottom: 5px;
-    }
-
-    p {
-      color: #555;
-      margin-top: 0;
-    }
-
-    .btn-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 15px;
-      margin-top: 25px;
-    }
-
-    .btn {
-      background-color: #b22222;
-      color: white;
-      border: none;
-      padding: 15px 10px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1em;
-      transition: 0.2s;
-    }
-
-    .btn:hover {
-      background-color: #8b1a1a;
-      transform: scale(1.05);
-    }
-
-    .share-link {
-      margin-top: 25px;
-      background: #444;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .share-link:hover {
-      background: #000;
-    }
-
-    .logout {
-      margin-top: 25px;
-      background: #ccc;
-      color: #333;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .logout:hover {
-      background: #999;
-    }
-  </style>
 </head>
 <body>
-  <div class="dashboard">
-    <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo" />
-    <h2 id="barberName">Welcome, Barber</h2>
-    <p id="shopName">Shear Time Portal</p>
+  <!-- Header -->
+  <header class="app-header">
+    <img src="shear-time-logo.png" alt="Logo" class="header-logo" />
+    Shear Time
+  </header>
 
-    <div class="btn-grid">
-      <button class="btn" onclick="window.location.href='appointments.html'">Appointments</button>
-      <button class="btn" onclick="window.location.href='clients.html'">Clients</button>
-      <button class="btn" onclick="window.location.href='services.html'">Services</button>
-      <button class="btn" onclick="window.location.href='payments.html'">Payments</button>
-      <button class="btn" onclick="window.location.href='settings.html'">Settings</button>
-    </div>
+  <!-- Main Container -->
+  <div class="container">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" width="80" />
+    <h2 id="welcomeText">Welcome to Your Dashboard</h2>
+    <p id="userEmail"></p>
 
-    <button class="share-link" id="shareLinkBtn">📤 Share Booking Link</button>
-    <button class="logout" id="logoutBtn">Logout</button>
+    <!-- Buttons -->
+    <button class="btn" onclick="goTo('book.html')">Appointments</button>
+    <button class="btn" onclick="goTo('clients.html')">Clients</button>
+    <button class="btn" onclick="goTo('services.html')">Services</button>
+    <button class="btn" onclick="goTo('payments.html')">Payments</button>
+    <button class="btn" onclick="goTo('settings.html')">Settings</button>
+
+    <button id="logoutBtn" class="btn" style="background-color:#555;">Logout</button>
   </div>
 
-  <!-- ✅ Firebase SDK -->
+  <!-- Firebase + Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
@@ -127,46 +46,28 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getDatabase(app);
 
-    const barberNameEl = document.getElementById("barberName");
-    const shopNameEl = document.getElementById("shopName");
-    const shareLinkBtn = document.getElementById("shareLinkBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
+    const userEmail = document.getElementById("userEmail");
 
-    let currentUser = null;
-
-    onAuthStateChanged(auth, async (user) => {
+    // Redirect if not logged in
+    onAuthStateChanged(auth, (user) => {
       if (user) {
-        currentUser = user;
-
-        // Load profile info
-        const profileRef = ref(db, "users/" + user.uid + "/profile");
-        const snapshot = await get(profileRef);
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          barberNameEl.textContent = data.name || "Welcome, Barber";
-          shopNameEl.textContent = data.shopName || "Shear Time Portal";
-        } else {
-          barberNameEl.textContent = "Welcome, Barber";
-          shopNameEl.textContent = "Shear Time Portal";
-        }
-
-        // Handle share link
-        const bookingLink = `${window.location.origin}/book.html?barber=${user.uid}`;
-        shareLinkBtn.addEventListener("click", () => {
-          navigator.clipboard.writeText(bookingLink);
-          alert("📋 Booking link copied:\n" + bookingLink);
-        });
+        userEmail.textContent = `Logged in as: ${user.email}`;
       } else {
         window.location.href = "login.html";
       }
     });
 
-    logoutBtn.addEventListener("click", async () => {
+    // Logout function
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "login.html";
     });
+
+    // Page navigation
+    window.goTo = (page) => {
+      window.location.href = page;
+    };
   </script>
 </body>
 </html>
