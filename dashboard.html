@@ -4,11 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shear Time Barber Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f5f5f5;
+      background: #f5f5f5;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -17,41 +16,41 @@
     }
 
     .dashboard-container {
-      width: 95%;
-      max-width: 400px;
-      background-color: white;
-      border-radius: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 20px;
+      width: 90%;
+      max-width: 380px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 22px;
       text-align: center;
     }
 
     .logo {
-      width: 100px;
-      margin: 10px auto;
-      display: block;
+      width: 85px;
+      margin-bottom: 10px;
     }
 
     h2 {
-      color: #3a3a3a;
       font-size: 1.3rem;
-      margin-bottom: 15px;
+      color: #333;
+      margin-bottom: 12px;
     }
 
     .info-box {
       background: #fafafa;
       border-radius: 10px;
-      padding: 10px;
-      margin: 10px 0;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 0.95rem;
     }
 
     .logout-btn {
       background: #b52b2b;
       border: none;
       color: white;
-      border-radius: 8px;
       padding: 8px 14px;
-      margin-top: 5px;
+      border-radius: 8px;
+      margin-top: 8px;
       cursor: pointer;
     }
 
@@ -59,37 +58,38 @@
 
     input {
       width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 8px;
       padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
       text-align: center;
     }
 
     .button-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
       justify-content: center;
-      margin-top: 15px;
+      margin-top: 18px;
     }
 
     button {
       background: #b52b2b;
-      border: none;
       color: white;
-      padding: 8px 14px;
+      border: none;
       border-radius: 10px;
+      padding: 10px 14px;
       cursor: pointer;
       flex: 1 1 45%;
-      min-width: 120px;
+      min-width: 130px;
+      font-size: 0.95rem;
     }
 
     button:hover { background: #8b2020; }
 
     footer {
-      margin-top: 10px;
       font-size: 0.8rem;
       color: #888;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -109,7 +109,7 @@
       <h3>My Booking Link</h3>
       <input type="text" id="bookingLink" readonly />
       <div class="button-row">
-        <button id="copyLink">Copy Link</button>
+        <button id="copyLink">Copy</button>
         <button id="shareLink">Share</button>
         <button id="qrLink">QR</button>
       </div>
@@ -146,39 +146,49 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+
+    // Ensure session stays alive
     await setPersistence(auth, browserLocalPersistence);
 
     const logoutBtn = document.getElementById("logoutBtn");
     const bookingLinkInput = document.getElementById("bookingLink");
 
+    // Logout button
     logoutBtn.addEventListener("click", () => {
-      signOut(auth).then(() => (window.location.href = "login.html"));
+      signOut(auth).then(() => window.location.href = "login.html");
     });
 
-    onAuthStateChanged(auth, (user) => {
-      const emailField = document.getElementById("barberEmail");
+    // Wait for Firebase to finish restoring the session
+    const waitForAuth = (callback) => {
+      let tries = 0;
+      const interval = setInterval(() => {
+        if (auth.currentUser || tries > 10) {
+          clearInterval(interval);
+          callback(auth.currentUser);
+        }
+        tries++;
+      }, 250);
+    };
 
+    waitForAuth((user) => {
       if (user) {
-        emailField.textContent = user.email;
+        document.getElementById("barberEmail").textContent = user.email;
         const uid = user.uid;
-        const publicLink = `${location.origin}/book-public.html?barber=${encodeURIComponent(uid)}`;
-        bookingLinkInput.value = publicLink;
+        const link = `${location.origin}/book-public.html?barber=${encodeURIComponent(uid)}`;
+        bookingLinkInput.value = link;
       } else {
-        // Wait a bit to prevent false redirect before Firebase initializes
-        setTimeout(() => {
-          if (!auth.currentUser) window.location.href = "login.html";
-        }, 1200);
+        window.location.href = "login.html";
       }
     });
 
-    // Copy
+    // Copy booking link
     document.getElementById("copyLink").addEventListener("click", () => {
       bookingLinkInput.select();
       document.execCommand("copy");
-      alert("Link copied!");
+      alert("Booking link copied!");
     });
 
-    // Share
+    // Share link
     document.getElementById("shareLink").addEventListener("click", async () => {
       const link = bookingLinkInput.value;
       if (navigator.share) {
@@ -190,7 +200,7 @@
 
     // QR placeholder
     document.getElementById("qrLink").addEventListener("click", () => {
-      alert("QR code coming soon!");
+      alert("QR feature coming soon!");
     });
   </script>
 </body>
