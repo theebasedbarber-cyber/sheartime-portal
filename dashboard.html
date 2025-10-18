@@ -24,6 +24,7 @@
       text-align: center;
       width: 100%;
       max-width: 420px;
+      display: none; /* Hidden until user loads */
     }
     .logo {
       width: 90px;
@@ -96,10 +97,16 @@
       font-size: 12px;
       color: #777;
     }
+    #loading {
+      color: #bbb;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <div class="card">
+  <div id="loading">Loading dashboard...</div>
+
+  <div class="card" id="dashboardCard">
     <img src="shear-time-logo.png" class="logo" alt="Shear Time Logo">
     <h2>Shear Time Barber Dashboard</h2>
     <div class="role">Barber</div>
@@ -131,10 +138,11 @@
     import {
       getAuth,
       onAuthStateChanged,
-      signOut
+      signOut,
+      setPersistence,
+      browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-auth.js";
 
-    // 🔥 Firebase Config (same as your current project)
     const firebaseConfig = {
       apiKey: "AIzaSyATJ7J9wig1gcQPtc5PgwiU1krP8cs_Tj-M",
       authDomain: "shear-time-86b38.firebaseapp.com",
@@ -147,44 +155,47 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const userEmail = document.getElementById("userEmail");
-    const bookingLink = document.getElementById("bookingLink");
-    const copyLink = document.getElementById("copyLink");
-    const logoutBtn = document.getElementById("logoutBtn");
+    // Force local session persistence
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
+        onAuthStateChanged(auth, (user) => {
+          const loadingDiv = document.getElementById("loading");
+          const dashboardCard = document.getElementById("dashboardCard");
 
-    // Listen for login state once
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.replace("login.html");
-        return;
-      }
+          if (user) {
+            // Show dashboard
+            loadingDiv.style.display = "none";
+            dashboardCard.style.display = "block";
 
-      // ✅ Logged-in user
-      userEmail.textContent = user.email;
+            document.getElementById("userEmail").textContent = user.email;
 
-      // Create unique booking link
-      const barberUID = user.uid;
-      const link = `https://sheartime-portal.vercel.app/book-public.html?uid=${barberUID}`;
-      bookingLink.textContent = link;
-      bookingLink.href = link;
+            const barberUID = user.uid;
+            const link = `https://sheartime-portal.vercel.app/book-public.html?uid=${barberUID}`;
+            const bookingLink = document.getElementById("bookingLink");
+            bookingLink.textContent = link;
+            bookingLink.href = link;
 
-      // Copy link to clipboard
-      copyLink.addEventListener("click", () => {
-        navigator.clipboard.writeText(link);
-        copyLink.textContent = "Copied!";
-        setTimeout(() => (copyLink.textContent = "Copy Link"), 2000);
+            document.getElementById("copyLink").addEventListener("click", () => {
+              navigator.clipboard.writeText(link);
+              const copyBtn = document.getElementById("copyLink");
+              copyBtn.textContent = "Copied!";
+              setTimeout(() => (copyBtn.textContent = "Copy Link"), 2000);
+            });
+
+            document.getElementById("logoutBtn").addEventListener("click", async () => {
+              await signOut(auth);
+              window.location.replace("login.html");
+            });
+          } else {
+            // Not logged in → go to login
+            loadingDiv.textContent = "Redirecting to login...";
+            setTimeout(() => window.location.replace("login.html"), 600);
+          }
+        });
+      })
+      .catch((error) => {
+        console.error("Auth persistence error:", error);
       });
-    });
-
-    // Logout button
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-        window.location.replace("login.html");
-      } catch (error) {
-        console.error("Logout error:", error);
-      }
-    });
   </script>
 </body>
 </html>
