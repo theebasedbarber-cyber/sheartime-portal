@@ -1,7 +1,7 @@
-/* General layout */
+/* ===== GLOBAL PAGE STYLING ===== */
 body {
   font-family: 'Poppins', sans-serif;
-  background: linear-gradient(180deg, #111 0%, #1b1b1b 100%);
+  background: radial-gradient(circle at top, #111 0%, #000 100%);
   color: #fff;
   margin: 0;
   padding: 0;
@@ -12,55 +12,71 @@ body {
   min-height: 100vh;
 }
 
-/* Logo */
-img.logo {
-  width: 100px;
-  height: auto;
-  margin-bottom: 15px;
-  border-radius: 50%;
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-}
-
-/* Card container */
+/* ===== CONTAINER / CARD ===== */
 .container {
-  background-color: #1e1e1e;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  background-color: #1a1a1a;
+  border: 1px solid rgba(255, 215, 0, 0.25);
   border-radius: 15px;
-  padding: 25px;
+  padding: 30px 25px;
   width: 90%;
-  max-width: 400px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+  max-width: 420px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
   text-align: center;
+  transition: transform 0.3s ease;
 }
 
-/* Titles */
-h1, h2 {
-  color: #f5f5f5;
+.container:hover {
+  transform: translateY(-3px);
+}
+
+/* ===== LOGO ===== */
+.logo {
+  display: block;
+  margin: 0 auto 15px auto;
+  width: 80px;
+  height: auto;
+  border-radius: 50%;
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.4);
+}
+
+/* Smaller logo on booking/public pages */
+.booking-container .logo {
+  width: 70px;
   margin-bottom: 10px;
 }
 
-/* Input fields */
+/* ===== HEADINGS ===== */
+h1, h2, h3 {
+  color: #f8f8f8;
+  font-weight: 600;
+  margin: 10px 0;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.2);
+}
+
+/* ===== INPUT FIELDS ===== */
 input[type="email"],
 input[type="password"],
 input[type="text"],
 input[type="datetime-local"],
 select {
   width: 90%;
-  padding: 10px;
+  padding: 10px 12px;
   margin: 10px 0;
   border-radius: 10px;
-  border: 1px solid #444;
-  background: #2b2b2b;
+  border: 1px solid #333;
+  background: #262626;
   color: #fff;
   font-size: 14px;
   outline: none;
+  box-sizing: border-box;
 }
 
 input:focus, select:focus {
-  border-color: #ff4757;
+  border-color: #ff3b3b;
+  box-shadow: 0 0 6px rgba(255, 59, 59, 0.4);
 }
 
-/* Buttons */
+/* ===== BUTTONS ===== */
 button, .btn {
   background-color: #b71c1c;
   color: #fff;
@@ -76,40 +92,91 @@ button, .btn {
 }
 
 button:hover, .btn:hover {
-  background-color: #ff2e2e;
-  box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);
+  background-color: #ff3030;
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.7);
+  transform: translateY(-2px);
 }
 
-/* Footer */
-footer {
-  text-align: center;
+/* ===== DASHBOARD BUTTON GRID ===== */
+.dashboard-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
   margin-top: 20px;
-  color: #aaa;
-  font-size: 12px;
 }
 
-/* Booking link card */
+.dashboard-buttons button,
+.dashboard-buttons .btn {
+  flex: 1 1 42%;
+  max-width: 150px;
+}
+
+/* ===== BOOKING PAGE ===== */
+.booking-container {
+  background-color: #161616;
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 15px;
+  padding: 25px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.booking-container h2 {
+  margin-bottom: 15px;
+  color: #f5f5f5;
+}
+
+/* ===== LINK BOX ===== */
 .link-box {
   background: #252525;
   border: 1px solid rgba(255, 215, 0, 0.2);
   padding: 15px;
   border-radius: 10px;
-  margin-top: 10px;
+  margin-top: 15px;
   word-wrap: break-word;
-  color: #f8f8f8;
+  color: #e0e0e0;
+  font-size: 14px;
 }
 
-/* Small text */
+/* ===== FOOTER ===== */
+footer {
+  text-align: center;
+  margin-top: 25px;
+  color: #aaa;
+  font-size: 12px;
+}
+
+/* ===== SMALL TEXT ===== */
 small {
   color: #ccc;
 }
 
-/* Mobile tweaks */
+/* ===== SUCCESS & ERROR MESSAGES ===== */
+.success-message {
+  color: #9df29d;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.error-message {
+  color: #ff6b6b;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+/* ===== RESPONSIVE MOBILE ===== */
 @media (max-width: 480px) {
-  .container {
+  .container, .booking-container {
     padding: 20px 15px;
   }
   h1, h2 {
     font-size: 1.2rem;
+  }
+  button, .btn {
+    font-size: 14px;
+    width: 100%;
   }
 }
