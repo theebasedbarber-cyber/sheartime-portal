@@ -1,182 +1,165 @@
-/* ===== GLOBAL PAGE STYLING ===== */
+/* ===== Shear Time Global Premium Theme ===== */
+
+:root {
+  --primary-red: #e74c3c;
+  --primary-hover: #ff6150;
+  --bg-dark: radial-gradient(circle at top, #111 0%, #000 100%);
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --text-light: #fff;
+  --text-muted: #bbb;
+}
+
+/* Base Body Setup */
 body {
-  font-family: 'Poppins', sans-serif;
-  background: radial-gradient(circle at top, #111 0%, #000 100%);
-  color: #fff;
   margin: 0;
-  padding: 0;
+  font-family: "Poppins", sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-light);
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: flex-start;
   min-height: 100vh;
+  padding: 30px 15px;
 }
 
-/* ===== CONTAINER / CARD ===== */
+/* Card Containers (Dashboard, Login, Booking, Appointments, etc.) */
 .container {
-  background-color: #1a1a1a;
-  border: 1px solid rgba(255, 215, 0, 0.25);
-  border-radius: 15px;
-  padding: 30px 25px;
-  width: 90%;
+  width: 100%;
   max-width: 420px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.25);
+  padding: 25px;
   text-align: center;
-  transition: transform 0.3s ease;
-}
-
-.container:hover {
-  transform: translateY(-3px);
-}
-
-/* ===== LOGO ===== */
-.logo {
-  display: block;
-  margin: 0 auto 15px auto;
-  width: 80px;
-  height: auto;
-  border-radius: 50%;
-  box-shadow: 0 0 18px rgba(255, 215, 0, 0.4);
-}
-
-/* Smaller logo on booking/public pages */
-.booking-container .logo {
-  width: 70px;
-  margin-bottom: 10px;
-}
-
-/* ===== HEADINGS ===== */
-h1, h2, h3 {
-  color: #f8f8f8;
-  font-weight: 600;
-  margin: 10px 0;
-  text-shadow: 0 0 6px rgba(255, 215, 0, 0.2);
-}
-
-/* ===== INPUT FIELDS ===== */
-input[type="email"],
-input[type="password"],
-input[type="text"],
-input[type="datetime-local"],
-select {
-  width: 90%;
-  padding: 10px 12px;
-  margin: 10px 0;
-  border-radius: 10px;
-  border: 1px solid #333;
-  background: #262626;
-  color: #fff;
-  font-size: 14px;
-  outline: none;
+  margin: auto;
   box-sizing: border-box;
 }
 
-input:focus, select:focus {
-  border-color: #ff3b3b;
-  box-shadow: 0 0 6px rgba(255, 59, 59, 0.4);
+/* Logo */
+.logo {
+  width: 80px;
+  max-width: 100%;
+  margin-bottom: 10px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* ===== BUTTONS ===== */
-button, .btn {
-  background-color: #b71c1c;
-  color: #fff;
-  padding: 12px 18px;
-  margin: 8px;
-  border: none;
-  border-radius: 10px;
+/* Headings */
+h1, h2, h3 {
+  color: var(--text-light);
   font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Buttons */
+button, .btn {
+  background: var(--primary-red);
+  border: none;
+  border-radius: 6px;
+  color: var(--text-light);
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  margin: 6px 4px;
   cursor: pointer;
-  width: 85%;
-  max-width: 300px;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease;
+  width: auto;
+  min-width: 120px;
 }
 
 button:hover, .btn:hover {
-  background-color: #ff3030;
-  box-shadow: 0 0 10px rgba(255, 71, 87, 0.7);
-  transform: translateY(-2px);
+  background: var(--primary-hover);
 }
 
-/* ===== DASHBOARD BUTTON GRID ===== */
+/* Secondary Buttons */
+.secondary {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Inputs */
+input, select {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--text-light);
+  border-radius: 6px;
+  padding: 10px;
+  width: 90%;
+  max-width: 320px;
+  margin: 6px auto;
+  display: block;
+  box-sizing: border-box;
+}
+
+input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Links */
+a {
+  color: var(--primary-hover);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Time Slots / Appointment Cards */
+.time-slots, .calendar {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 15px;
+  text-align: left;
+}
+
+.time-slot {
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+  color: #ddd;
+}
+
+/* Footer */
+footer {
+  margin-top: 25px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* Dashboard Buttons Layout */
 .dashboard-buttons {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
-  margin-top: 20px;
+  gap: 10px;
 }
 
-.dashboard-buttons button,
-.dashboard-buttons .btn {
-  flex: 1 1 42%;
-  max-width: 150px;
+.dashboard-buttons button {
+  flex: 1 1 calc(50% - 10px);
+  max-width: 48%;
 }
 
-/* ===== BOOKING PAGE ===== */
-.booking-container {
-  background-color: #161616;
-  border: 1px solid rgba(255, 215, 0, 0.25);
-  border-radius: 15px;
-  padding: 25px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
-  text-align: center;
-}
-
-.booking-container h2 {
-  margin-bottom: 15px;
-  color: #f5f5f5;
-}
-
-/* ===== LINK BOX ===== */
-.link-box {
-  background: #252525;
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  padding: 15px;
-  border-radius: 10px;
-  margin-top: 15px;
-  word-wrap: break-word;
-  color: #e0e0e0;
-  font-size: 14px;
-}
-
-/* ===== FOOTER ===== */
-footer {
-  text-align: center;
-  margin-top: 25px;
-  color: #aaa;
-  font-size: 12px;
-}
-
-/* ===== SMALL TEXT ===== */
-small {
-  color: #ccc;
-}
-
-/* ===== SUCCESS & ERROR MESSAGES ===== */
-.success-message {
-  color: #9df29d;
-  font-size: 14px;
-  margin-top: 10px;
-}
-
-.error-message {
-  color: #ff6b6b;
-  font-size: 14px;
-  margin-top: 10px;
-}
-
-/* ===== RESPONSIVE MOBILE ===== */
+/* Responsive (Mobile Friendly) */
 @media (max-width: 480px) {
-  .container, .booking-container {
-    padding: 20px 15px;
+  .container {
+    padding: 20px;
   }
-  h1, h2 {
-    font-size: 1.2rem;
-  }
+
   button, .btn {
-    font-size: 14px;
     width: 100%;
+    font-size: 1rem;
+    margin: 8px 0;
+  }
+
+  .dashboard-buttons button {
+    max-width: 100%;
+  }
+
+  .logo {
+    width: 70px;
   }
 }
