@@ -2,96 +2,126 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shear Time | Appointments</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Appointments | Shear Time</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
+    .month-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .month-btn{width:auto;padding:8px 10px}
+    .cal{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+    .cal th{background:#7a1a1a;color:#fff;padding:10px;font-weight:600;text-align:center}
+    .cal td{height:46px;background:#fff;text-align:right;padding:8px 10px;border:1px solid #eee;position:relative;vertical-align:top;cursor:pointer}
+    .cal td.past{color:#9aa0a6;background:#fafafa}
+    .cal td.today{outline:2px solid #b22222;outline-offset:-2px;font-weight:700}
+    .cal td.has-items::after{content:"";width:6px;height:6px;border-radius:999px;background:#b22222;position:absolute;left:8px;bottom:8px}
+    .cal td.has-block::before{content:"";width:10px;height:3px;border-radius:2px;background:#9aa0a6;position:absolute;left:6px;top:6px}
+    .cal td.full-off{background:#e9ecef !important}
+    .cal td.full-off .off-badge{position:absolute;left:6px;bottom:6px;background:#adb5bd;color:#fff;font-size:.65em;border-radius:4px;padding:1px 4px}
+    .legend{display:flex;gap:10px;justify-content:center;margin:12px 0 6px}
+    .legend span{display:flex;align-items:center;gap:6px;font-size:.85em;color:#666}
+    .dot{width:8px;height:8px;border-radius:50%;background:#b22222;display:inline-block}
+    .bar{width:14px;height:4px;border-radius:2px;background:#9aa0a6;display:inline-block}
+    .list{margin-top:10px;text-align:left}
+    .card{border:1px solid #eee;border-radius:10px;padding:12px;margin:8px 0;background:#fff}
+    .row-sb{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .muted{color:#666}
+    .btn-row{display:flex;gap:10px;margin-top:10px}
+    .btn-row .btn{flex:1}
+    .icon-btn{background:#ddd;color:#222;padding:6px 8px;border-radius:8px;font-size:.9em;width:auto}
 
-    h2 {
-      color: #8b0000;
-    }
-
-    #calendar {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    #calendar th, #calendar td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-    }
-
-    #calendar th {
-      background-color: #b22222;
-      color: white;
-    }
-
-    #calendar td {
-      background-color: #f9f9f9;
-      cursor: pointer;
-    }
-
-    #calendar td.booked {
-      background-color: #ff6b6b; /* red for booked days */
-      color: white;
-    }
-
-    .btn {
-      background-color: #b22222;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-
-    .btn:hover {
-      background-color: #8b1a1a;
-    }
-
-    .appointment-list {
-      margin-top: 20px;
-      text-align: left;
-    }
-
-    .appointment-item {
-      border-bottom: 1px solid #ccc;
-      padding: 10px 0;
-    }
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:50}
+    .modal{width:92%;max-width:380px;background:#fff;border-radius:14px;padding:16px;box-shadow:0 10px 25px rgba(0,0,0,.25)}
+    .modal h3{margin:0 0 8px}
+    .modal .row{display:flex;gap:8px}
+    .modal .row > *{flex:1}
+    .preset-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .preset-row button{background:#e9ecef;color:#333}
+    .preset-row button:hover{background:#dfe4ea}
   </style>
 </head>
 <body>
-  <div class="container">
-    <img src="shear-time-logo.png" alt="Shear Time Logo" width="80" />
-    <h2>Appointments</h2>
+  <header class="app-header">
+    <img src="shear-time-logo.png" alt="Logo" class="header-logo" />
+    Shear Time
+  </header>
 
-    <table id="calendar"></table>
+  <div class="container" id="app">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" style="width:64px;margin-bottom:4px" />
+    <h2 style="margin:6px 0 12px">Appointments</h2>
 
-    <div class="appointment-list" id="appointmentList">
-      <h3>Your Appointments</h3>
-      <div id="appointments"></div>
+    <div class="month-bar">
+      <button class="btn month-btn" id="prevMonth">◀</button>
+      <div id="monthTitle" style="font-weight:700"></div>
+      <button class="btn month-btn" id="nextMonth">▶</button>
     </div>
 
-    <button class="btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+    <table class="cal">
+      <thead>
+        <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
+      </thead>
+      <tbody id="calBody"></tbody>
+    </table>
+
+    <div class="legend">
+      <span><span class="dot"></span> appointment</span>
+      <span><span class="bar"></span> blocked time</span>
+      <span>red outline = today</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" id="addAppt">+ Add Appointment</button>
+      <button class="btn" id="openBlock">Block Time</button>
+    </div>
+
+    <h3 style="text-align:left;margin:16px 0 8px" id="listTitle">Your Appointments</h3>
+    <div class="list" id="apptList"></div>
+    <div class="list-empty" id="emptyList" style="display:none">Nothing scheduled for this date.</div>
+
+    <button class="btn" onclick="window.location.href='dashboard.html'" style="margin-top:14px">Back to Dashboard</button>
   </div>
 
-  <!-- ✅ Firebase SDK -->
+  <!-- Block time modal -->
+  <div class="modal-backdrop" id="blockModal">
+    <div class="modal">
+      <h3>Block Availability</h3>
+      <label for="blkDate">Date</label>
+      <input type="date" id="blkDate" required />
+      <div class="row">
+        <div>
+          <label for="blkTime">Start</label>
+          <select id="blkTime"></select>
+        </div>
+        <div>
+          <label for="blkDur">Duration</label>
+          <select id="blkDur">
+            <option value="30">30 min</option>
+            <option value="60" selected>60 min</option>
+            <option value="90">90 min</option>
+            <option value="120">120 min</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:8px" class="muted">Presets</div>
+      <div class="preset-row">
+        <button class="btn" type="button" id="presetMorning">Morning (8–12)</button>
+        <button class="btn" type="button" id="presetAfternoon">Afternoon (12–5)</button>
+        <button class="btn" type="button" id="presetEvening">Evening (5–9)</button>
+        <button class="btn" type="button" id="presetFull">Full Day Off</button>
+      </div>
+
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn" id="saveBlock">Save Block</button>
+        <button class="btn" id="cancelBlock" style="background:#666">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+    import { getDatabase, ref, onValue, get, set, push, child, remove } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
@@ -107,63 +137,306 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    const calendarEl = document.getElementById("calendar");
-    const appointmentsDiv = document.getElementById("appointments");
+    const monthTitle = document.getElementById("monthTitle");
+    const calBody = document.getElementById("calBody");
+    const apptList = document.getElementById("apptList");
+    const emptyList = document.getElementById("emptyList");
+    const addApptBtn = document.getElementById("addAppt");
+    const prevBtn = document.getElementById("prevMonth");
+    const nextBtn = document.getElementById("nextMonth");
 
-    function generateCalendar() {
-      const now = new Date();
-      const month = now.getMonth();
-      const year = now.getFullYear();
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const daysInMonth = lastDay.getDate();
+    const blockModal = document.getElementById("blockModal");
+    const openBlockBtn = document.getElementById("openBlock");
+    const cancelBlock = document.getElementById("cancelBlock");
+    const blkDate = document.getElementById("blkDate");
+    const blkTime = document.getElementById("blkTime");
+    const blkDur = document.getElementById("blkDur");
+    const saveBlock = document.getElementById("saveBlock");
+    const presetMorning = document.getElementById("presetMorning");
+    const presetAfternoon = document.getElementById("presetAfternoon");
+    const presetEvening = document.getElementById("presetEvening");
+    const presetFull = document.getElementById("presetFull");
 
-      let table = "<tr>";
-      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      days.forEach(day => table += `<th>${day}</th>`);
-      table += "</tr><tr>";
+    let uid = null;
+    let current = new Date();
+    let selectedDate = new Date();
 
-      for (let i = 0; i < firstDay.getDay(); i++) table += "<td></td>";
+    let appts = {};         // id -> item
+    let blocks = {};        // id -> item
+    let apptsByDay = {};    // YYYY-MM-DD -> [ids]
+    let blocksByDay = {};   // YYYY-MM-DD -> [ids]
 
-      for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
-        const formatted = date.toISOString().split('T')[0];
-        table += `<td id="day-${formatted}">${day}</td>`;
-        if (date.getDay() === 6) table += "</tr><tr>";
+    function pad(n){ return n.toString().padStart(2,"0"); }
+    function ymd(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+
+    function parseLegacyDate(str){
+      // supports "YYYY-MM-DD HH:MM AM/PM" or ISO
+      if(!str) return null;
+      if(str.includes("AM") || str.includes("PM")){
+        const [datePart, timePart, ampm] = str.split(/[\s]/).filter(Boolean);
+        const [yyyy, mm, dd] = datePart.split("-").map(Number);
+        let [hh, mi] = timePart.split(":").map(Number);
+        if (ampm === "PM" && hh !== 12) hh += 12;
+        if (ampm === "AM" && hh === 12) hh = 0;
+        return new Date(yyyy, mm-1, dd, hh, mi);
       }
-
-      table += "</tr>";
-      calendarEl.innerHTML = table;
+      return new Date(str);
     }
 
-    function loadAppointments(userId) {
-      const apptRef = ref(db, "users/" + userId + "/appointments");
-      onValue(apptRef, (snapshot) => {
-        const data = snapshot.val();
-        appointmentsDiv.innerHTML = "";
-        if (data) {
-          Object.keys(data).forEach(key => {
-            const appt = data[key];
-            const div = document.createElement("div");
-            div.className = "appointment-item";
-            div.textContent = `${appt.clientName} - ${appt.service} on ${appt.date}`;
-            appointmentsDiv.appendChild(div);
-            const dayCell = document.getElementById("day-" + appt.date);
-            if (dayCell) dayCell.classList.add("booked");
-          });
-        } else {
-          appointmentsDiv.innerHTML = "<p>No appointments found.</p>";
+    function fmtHuman(d){
+      const opts = { month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit" };
+      return new Intl.DateTimeFormat(undefined, opts).format(d);
+    }
+
+    function buildTimeList(select){
+      select.innerHTML = "";
+      for(let h=6; h<=21; h++){
+        for(let m of [0,30]){
+          const d = new Date(2000,0,1,h,m);
+          const label = d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+          const opt = document.createElement("option");
+          opt.value = `${pad(h)}:${pad(m)}`;
+          opt.textContent = label;
+          select.appendChild(opt);
         }
+      }
+    }
+    buildTimeList(blkTime);
+
+    function resetMaps(){
+      apptsByDay = {};
+      blocksByDay = {};
+      Object.keys(appts).forEach(id=>{
+        const item = appts[id];
+        const when = parseLegacyDate(item.date || item.when);
+        if(!when || isNaN(when)) return;
+        const key = ymd(when);
+        (apptsByDay[key] ||= []).push(id);
+      });
+      Object.keys(blocks).forEach(id=>{
+        const b = blocks[id];
+        const start = new Date(b.startISO);
+        const key = ymd(start);
+        (blocksByDay[key] ||= []).push(id);
       });
     }
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        generateCalendar();
-        loadAppointments(user.uid);
-      } else {
-        window.location.href = "login.html";
+    function isFullDayBlock(b){
+      const s = new Date(b.startISO), e = new Date(b.endISO);
+      return s.getHours()===0 && s.getMinutes()===0 && (e.getHours()===23 || e.getHours()===24) && e.getMinutes()>=59;
+    }
+
+    function renderCalendar(){
+      const y = current.getFullYear(), m = current.getMonth();
+      const first = new Date(y, m, 1);
+      const last = new Date(y, m+1, 0);
+      const today = new Date();
+      monthTitle.textContent = `${first.toLocaleString('default', {month:'long'})} ${y}`;
+      calBody.innerHTML = "";
+
+      let row = document.createElement("tr");
+      for(let i=0;i<first.getDay();i++) row.appendChild(document.createElement("td"));
+
+      for(let d=1; d<=last.getDate(); d++){
+        const cell = document.createElement("td");
+        const dateObj = new Date(y, m, d);
+        const key = ymd(dateObj);
+        cell.textContent = d;
+
+        if(dateObj.toDateString() === today.toDateString()) cell.classList.add("today");
+        if(dateObj < new Date(today.getFullYear(), today.getMonth(), today.getDate())) cell.classList.add("past");
+
+        if((apptsByDay[key]||[]).length) cell.classList.add("has-items");
+        const dayBlocks = (blocksByDay[key]||[]).map(id=>blocks[id]);
+        if(dayBlocks.length) cell.classList.add("has-block");
+        if(dayBlocks.some(isFullDayBlock)){
+          cell.classList.add("full-off");
+          const badge = document.createElement("div");
+          badge.className = "off-badge";
+          badge.textContent = "OFF";
+          cell.appendChild(badge);
+        }
+
+        cell.addEventListener("click", ()=>{
+          selectedDate = dateObj;
+          renderDayList();
+        });
+
+        row.appendChild(cell);
+        if((first.getDay()+d) % 7 === 0){
+          calBody.appendChild(row);
+          row = document.createElement("tr");
+        }
       }
+      if(row.children.length){
+        while(row.children.length<7) row.appendChild(document.createElement("td"));
+        calBody.appendChild(row);
+      }
+    }
+
+    function renderDayList(){
+      const key = ymd(selectedDate);
+      const idsA = (apptsByDay[key]||[]);
+      const idsB = (blocksByDay[key]||[]);
+      const day = new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(selectedDate);
+      document.getElementById("listTitle").textContent = `Schedule for ${day}`;
+
+      apptList.innerHTML = "";
+      let any = false;
+
+      // Blocks first
+      idsB.map(id=>blocks[id]).sort((a,b)=>new Date(a.startISO)-new Date(b.startISO)).forEach(b=>{
+        any = true;
+        const div = document.createElement("div");
+        div.className = "card";
+        const s = new Date(b.startISO), e = new Date(b.endISO);
+        const label = isFullDayBlock(b) ? "Full Day Off" : `${s.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})} – ${e.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}`;
+        div.innerHTML = `
+          <div class="row-sb">
+            <div><strong>Blocked</strong> <span class="muted">(${b.type||'custom'})</span><br>${label}</div>
+            <button class="icon-btn" data-del-block="${b._id}">🗑</button>
+          </div>`;
+        apptList.appendChild(div);
+      });
+
+      // Appointments
+      idsA.map(id=>({id, item:appts[id]}))
+          .sort((a,b)=>parseLegacyDate(a.item.date)-parseLegacyDate(b.item.date))
+          .forEach(({id, item})=>{
+        any = true;
+        const when = parseLegacyDate(item.date);
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <div class="row-sb">
+            <div>
+              <strong>${item.clientName || 'Client'}</strong>
+              <div class="muted">${item.service || ''}</div>
+            </div>
+            <div style="text-align:right">
+              ${when ? when.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}) : ''}
+              <div><button class="icon-btn" data-del-appt="${id}">🗑</button></div>
+            </div>
+          </div>`;
+        apptList.appendChild(div);
+      });
+
+      emptyList.style.display = any ? "none" : "block";
+
+      // Wire delete buttons
+      apptList.querySelectorAll("[data-del-appt]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const id = btn.getAttribute("data-del-appt");
+          if(confirm("Delete this appointment?")){
+            await remove(ref(db, `users/${uid}/appointments/${id}`));
+          }
+        });
+      });
+      apptList.querySelectorAll("[data-del-block]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const id = btn.getAttribute("data-del-block");
+          if(confirm("Remove this blocked time?")){
+            await remove(ref(db, `users/${uid}/blockedTimes/${id}`));
+          }
+        });
+      });
+    }
+
+    function rebuildAll(){
+      resetMaps();
+      renderCalendar();
+      renderDayList();
+    }
+
+    // Load data live
+    function liveSubscribe(){
+      onValue(ref(db, `users/${uid}/appointments`), (snap)=>{
+        appts = {};
+        if(snap.exists()){
+          const val = snap.val();
+          for(const id in val) appts[id] = val[id];
+        }
+        rebuildAll();
+      });
+      onValue(ref(db, `users/${uid}/blockedTimes`), (snap)=>{
+        blocks = {};
+        if(snap.exists()){
+          const val = snap.val();
+          for(const id in val) blocks[id] = {...val[id], _id:id};
+        }
+        rebuildAll();
+      });
+    }
+
+    // Month nav
+    document.getElementById("prevMonth").addEventListener("click", ()=>{ current.setMonth(current.getMonth()-1); renderCalendar(); });
+    document.getElementById("nextMonth").addEventListener("click", ()=>{ current.setMonth(current.getMonth()+1); renderCalendar(); });
+
+    // Add appointment → booking page
+    addApptBtn.addEventListener("click", ()=>{ if(uid) window.location.href = `book.html?barber=${encodeURIComponent(uid)}`; });
+
+    // Modal handlers
+    function openModal(){
+      const today = new Date();
+      blkDate.value = ymd(selectedDate || today);
+      blockModal.style.display = "flex";
+    }
+    function closeModal(){ blockModal.style.display = "none"; }
+
+    openBlockBtn.addEventListener("click", openModal);
+    cancelBlock.addEventListener("click", closeModal);
+
+    function saveCustomBlock(typeOverride=null){
+      const date = blkDate.value;
+      if(!date){ alert("Pick a date"); return; }
+
+      let start, end, type="custom";
+      if(typeOverride === "full"){
+        start = new Date(`${date}T00:00:00`);
+        end   = new Date(`${date}T23:59:59`);
+        type = "full";
+      } else if(typeOverride === "morning"){
+        start = new Date(`${date}T08:00:00`);
+        end   = new Date(`${date}T12:00:00`);
+        type = "morning";
+      } else if(typeOverride === "afternoon"){
+        start = new Date(`${date}T12:00:00`);
+        end   = new Date(`${date}T17:00:00`);
+        type = "afternoon";
+      } else if(typeOverride === "evening"){
+        start = new Date(`${date}T17:00:00`);
+        end   = new Date(`${date}T21:00:00`);
+        type = "evening";
+      } else {
+        // custom range
+        const [H,M] = (blkTime.value || "09:00").split(":").map(Number);
+        const dur = parseInt(blkDur.value,10) || 60;
+        start = new Date(`${date}T${pad(H)}:${pad(M)}:00`);
+        end = new Date(start.getTime() + dur*60000);
+        type = "custom";
+      }
+
+      return push(ref(db, `users/${uid}/blockedTimes`), {
+        type, startISO: start.toISOString(), endISO: end.toISOString(),
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    // Save block button = custom by default
+    saveBlock.addEventListener("click", async ()=>{
+      try{ await saveCustomBlock(); closeModal(); } catch(e){ alert("Couldn't save block."); }
+    });
+    presetMorning.addEventListener("click", async ()=>{ try{ await saveCustomBlock("morning"); closeModal(); }catch(e){ alert("Error"); }});
+    presetAfternoon.addEventListener("click", async ()=>{ try{ await saveCustomBlock("afternoon"); closeModal(); }catch(e){ alert("Error"); }});
+    presetEvening.addEventListener("click", async ()=>{ try{ await saveCustomBlock("evening"); closeModal(); }catch(e){ alert("Error"); }});
+    presetFull.addEventListener("click", async ()=>{ try{ await saveCustomBlock("full"); closeModal(); }catch(e){ alert("Error"); }});
+
+    // Auth + init
+    onAuthStateChanged(auth, (user)=>{
+      if(!user){ window.location.href = "login.html"; return; }
+      uid = user.uid;
+      selectedDate = new Date();
+      liveSubscribe();
     });
   </script>
 </body>
