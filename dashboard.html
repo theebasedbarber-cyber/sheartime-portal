@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shear Time | Dashboard</title>
+  <style>
+    body {
+      background-color: #fafafa;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 60px;
+      margin: 0;
+    }
+    .card {
+      background: #fff;
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    img.logo {
+      width: 100px;
+      margin-bottom: 20px;
+    }
+    h2 {
+      color: #b22222;
+    }
+    button {
+      margin-top: 20px;
+      background-color: #b22222;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #8b1a1a;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="/shear-time-logo.png" alt="Shear Time Logo" class="logo" />
+    <h2>Welcome to Shear Time</h2>
+    <p id="userEmail"></p>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
+      authDomain: "shear-time-portal.firebaseapp.com",
+      projectId: "shear-time-portal",
+      storageBucket: "shear-time-portal.firebasestorage.app",
+      messagingSenderId: "65107203915",
+      appId: "1:65107203915:web:4dcd3b078474c22ef1ba76"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // 👤 Detect if user is signed in
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("userEmail").textContent = "Logged in as: " + user.email;
+      } else {
+        window.location.href = "login.html"; // redirect if not logged in
+      }
+    });
+
+    // 🚪 Logout
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      alert("Logged out successfully!");
+      window.location.href = "login.html";
+    });
+  </script>
+</body>
+</html>
