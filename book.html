@@ -5,106 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Book Appointment | Shear Time</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    /* --- Simple mobile layout fix --- */
-    body {
-      background: #f3f3f3;
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-    }
-
-    .app-header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 55px;
-      background: #b22222;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 1.2em;
-      z-index: 10;
-    }
-
-    .header-logo {
-      width: 30px;
-      margin-right: 8px;
-    }
-
-    .container {
-      margin-top: 80px;
-      width: 95%;
-      max-width: 380px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 14px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-
-    img {
-      width: 70px;
-      margin-bottom: 8px;
-    }
-
-    label {
-      display: block;
-      text-align: left;
-      font-weight: bold;
-      color: #333;
-      margin-top: 8px;
-      font-size: 0.9em;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 4px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 0.95em;
-    }
-
-    button {
-      width: 100%;
-      background-color: #b22222;
-      color: white;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 1em;
-      margin-top: 14px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    button:hover {
-      background-color: #8b1a1a;
-    }
-
-    .success, .error {
-      padding: 10px;
-      border-radius: 8px;
-      margin-top: 12px;
-      font-size: 0.9em;
-      display: none;
-    }
-
-    .success {
-      background: #c9f7c2;
-      color: #155724;
-    }
-
-    .error {
-      background: #f8d7da;
-      color: #721c24;
-    }
-  </style>
 </head>
 <body>
   <header class="app-header">
@@ -143,7 +43,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getDatabase, ref, push, get, child } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+    import { getDatabase, ref, push, get, child, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
@@ -158,8 +58,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const barberId = urlParams.get("barber");
+    const params = new URLSearchParams(window.location.search);
+    const barberId = params.get("barber");
 
     const barberNameEl = document.getElementById("barberName");
     const serviceSelect = document.getElementById("service");
@@ -169,33 +69,78 @@
     const dateInput = document.getElementById("date");
     const timeSelect = document.getElementById("time");
 
-    // --- Set Minimum Date ---
     const today = new Date().toISOString().split("T")[0];
     dateInput.min = today;
 
-    // --- Generate Time Slots (9 AM - 6 PM every 30 min) ---
-    for (let hour = 9; hour <= 18; hour++) {
-      const hourLabel = hour > 12 ? hour - 12 : hour;
-      const ampm = hour >= 12 ? "PM" : "AM";
-      const slot1 = `${hourLabel.toString().padStart(2, "0")}:00 ${ampm}`;
-      const slot2 = `${hourLabel.toString().padStart(2, "0")}:30 ${ampm}`;
-      if (hour < 18) {
-        [slot1, slot2].forEach((slot) => {
-          const opt = document.createElement("option");
-          opt.value = slot;
-          opt.textContent = slot;
-          timeSelect.appendChild(opt);
-        });
-      } else {
-        const opt = document.createElement("option");
-        opt.value = slot1;
-        opt.textContent = slot1;
-        timeSelect.appendChild(opt);
+    function pad(n){ return n.toString().padStart(2,"0"); }
+    function buildAllTimeSlots(){
+      const slots = [];
+      for(let h=9; h<=18; h++){
+        for(let m of [0,30]){
+          const d = new Date(2000,0,1,h,m);
+          slots.push(d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})); // "9:00 AM"
+        }
       }
+      return slots;
+    }
+    function to24h(label){ // "3:30 PM" -> "15:30"
+      const d = new Date(`2000-01-01 ${label}`);
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    function toMinutes(hhmm){ const [H,M] = hhmm.split(":").map(Number); return H*60+M; }
+
+    let blocked = []; // array of {startISO, endISO}
+    function loadBlockedForBarber(){
+      if(!barberId) return;
+      onValue(ref(db, `users/${barberId}/blockedTimes`), (snap)=>{
+        blocked = [];
+        if(snap.exists()){
+          const v = snap.val();
+          for(const id in v){ blocked.push(v[id]); }
+        }
+        refreshTimeOptions();
+      });
     }
 
-    // --- Load Barber Profile ---
-    if (!barberId) {
+    function refreshTimeOptions(){
+      const date = dateInput.value;
+      timeSelect.innerHTML = `<option value="">Select Time</option>`;
+      if(!date){ return; }
+
+      // All 30-min slots 9AM–6PM
+      const all = buildAllTimeSlots(); // labels like "9:00 AM"
+      // Remove those that fall inside any block for the chosen date
+      const dayBlockedRanges = blocked
+        .map(b=>({s:new Date(b.startISO), e:new Date(b.endISO)}))
+        .filter(r => r.s.toISOString().slice(0,10) === date || r.e.toISOString().slice(0,10) === date);
+
+      const allowed = all.filter(label=>{
+        const hhmm = to24h(label);        // "15:30"
+        const mins = toMinutes(hhmm);     // 930
+        // slot time anchored to chosen date
+        const slotStart = new Date(`${date}T${hhmm}:00`);
+        const inBlocked = dayBlockedRanges.some(r => slotStart >= r.s && slotStart < r.e);
+        return !inBlocked;
+      });
+
+      if(!allowed.length){
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No times available";
+        timeSelect.appendChild(opt);
+        return;
+      }
+      allowed.forEach(label=>{
+        const opt = document.createElement("option");
+        opt.value = label;
+        opt.textContent = label;
+        timeSelect.appendChild(opt);
+      });
+    }
+
+    dateInput.addEventListener("change", refreshTimeOptions);
+
+    if(!barberId){
       barberNameEl.textContent = "Invalid Barber Link";
       bookingForm.style.display = "none";
     } else {
@@ -208,8 +153,6 @@
             : "Shear Time Barber";
         }
       });
-
-      // --- Load Services ---
       get(child(dbRef, "users/" + barberId + "/services")).then((snapshot) => {
         serviceSelect.innerHTML = "";
         if (snapshot.exists()) {
@@ -221,13 +164,12 @@
             serviceSelect.appendChild(option);
           });
         } else {
-          serviceSelect.innerHTML =
-            "<option value=''>No services available yet</option>";
+          serviceSelect.innerHTML = "<option value=''>No services available yet</option>";
         }
       });
+      loadBlockedForBarber();
     }
 
-    // --- Handle Booking Submission ---
     bookingForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       successMsg.style.display = "none";
@@ -235,8 +177,8 @@
 
       const clientName = document.getElementById("clientName").value.trim();
       const service = document.getElementById("service").value;
-      const date = document.getElementById("date").value;
-      const time = document.getElementById("time").value;
+      const date = dateInput.value;
+      const time = timeSelect.value;
       const datetime = `${date} ${time}`;
 
       if (!barberId || !clientName || !service || !date || !time) {
@@ -247,13 +189,11 @@
 
       try {
         await push(ref(db, "users/" + barberId + "/appointments"), {
-          clientName,
-          service,
-          date: datetime,
-          createdAt: new Date().toISOString()
+          clientName, service, date: datetime, createdAt: new Date().toISOString()
         });
         successMsg.style.display = "block";
         bookingForm.reset();
+        refreshTimeOptions();
       } catch (err) {
         console.error(err);
         errorMsg.style.display = "block";
