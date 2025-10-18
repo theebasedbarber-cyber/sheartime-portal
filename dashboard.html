@@ -5,7 +5,95 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shear Time Barber Dashboard</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .dashboard-container {
+      width: 95%;
+      max-width: 400px;
+      background-color: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .logo {
+      width: 100px;
+      margin: 10px auto;
+      display: block;
+    }
+
+    h2 {
+      color: #3a3a3a;
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+    }
+
+    .info-box {
+      background: #fafafa;
+      border-radius: 10px;
+      padding: 10px;
+      margin: 10px 0;
+    }
+
+    .logout-btn {
+      background: #b52b2b;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      padding: 8px 14px;
+      margin-top: 5px;
+      cursor: pointer;
+    }
+
+    .logout-btn:hover { background: #8b2020; }
+
+    input {
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 15px;
+    }
+
+    button {
+      background: #b52b2b;
+      border: none;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      flex: 1 1 45%;
+      min-width: 120px;
+    }
+
+    button:hover { background: #8b2020; }
+
+    footer {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+  </style>
 </head>
+
 <body>
   <div class="dashboard-container">
     <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo" />
@@ -22,8 +110,8 @@
       <input type="text" id="bookingLink" readonly />
       <div class="button-row">
         <button id="copyLink">Copy Link</button>
-        <button id="shareLink">Share Link</button>
-        <button id="qrLink">QR Code</button>
+        <button id="shareLink">Share</button>
+        <button id="qrLink">QR</button>
       </div>
     </div>
 
@@ -33,6 +121,8 @@
       <button onclick="window.location.href='payments.html'">Payments</button>
       <button onclick="window.location.href='settings.html'">Settings</button>
     </div>
+
+    <footer>© 2025 Shear Time | All rights reserved</footer>
   </div>
 
   <script type="module">
@@ -56,58 +146,51 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-
-    // Ensure persistence so session stays after refresh
     await setPersistence(auth, browserLocalPersistence);
 
     const logoutBtn = document.getElementById("logoutBtn");
     const bookingLinkInput = document.getElementById("bookingLink");
 
     logoutBtn.addEventListener("click", () => {
-      signOut(auth).then(() => {
-        window.location.href = "login.html";
-      });
+      signOut(auth).then(() => (window.location.href = "login.html"));
     });
 
     onAuthStateChanged(auth, (user) => {
       const emailField = document.getElementById("barberEmail");
 
       if (user) {
-        // ✅ Logged in
         emailField.textContent = user.email;
         const uid = user.uid;
         const publicLink = `${location.origin}/book-public.html?barber=${encodeURIComponent(uid)}`;
         bookingLinkInput.value = publicLink;
       } else {
-        // ⏳ Wait a moment before redirecting to avoid false negatives
+        // Wait a bit to prevent false redirect before Firebase initializes
         setTimeout(() => {
-          if (!auth.currentUser) {
-            window.location.href = "login.html";
-          }
+          if (!auth.currentUser) window.location.href = "login.html";
         }, 1200);
       }
     });
 
-    // Copy link
+    // Copy
     document.getElementById("copyLink").addEventListener("click", () => {
       bookingLinkInput.select();
       document.execCommand("copy");
-      alert("Booking link copied!");
+      alert("Link copied!");
     });
 
-    // Share link (for mobile)
+    // Share
     document.getElementById("shareLink").addEventListener("click", async () => {
       const link = bookingLinkInput.value;
       if (navigator.share) {
-        await navigator.share({ title: "Book an Appointment", url: link });
+        await navigator.share({ title: "Book with Shear Time Barber", url: link });
       } else {
-        alert("Sharing not supported on this device.");
+        alert("Sharing not supported.");
       }
     });
 
-    // Placeholder for QR
+    // QR placeholder
     document.getElementById("qrLink").addEventListener("click", () => {
-      alert("QR code feature coming soon!");
+      alert("QR code coming soon!");
     });
   </script>
 </body>
