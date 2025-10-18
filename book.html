@@ -1,221 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Book Appointment | Shear Time</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Appointment | Shear Time Barber</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="app-header">
-    <img src="shear-time-logo.png" alt="Logo" class="header-logo" />
-    Shear Time
-  </header>
-
-  <div class="container">
-    <img src="shear-time-logo.png" alt="Shear Time Logo" />
-    <h2 id="barberName">Shear Time Barber</h2>
+  <div class="booking-container">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo small-logo">
+    <h2>Shear Time Barber</h2>
     <p>Book your appointment below</p>
 
-    <form id="bookingForm">
-      <label for="clientName">Your Name</label>
-      <input type="text" id="clientName" placeholder="Enter your name" required />
+    <input type="text" id="clientName" placeholder="Your Name">
+    <select id="service">
+      <option value="cut-$60">Cut - $60</option>
+    </select>
 
-      <label for="service">Select Service</label>
-      <select id="service" required>
-        <option value="">Loading services...</option>
-      </select>
+    <label>Choose Date</label>
+    <input type="date" id="datePicker">
 
-      <label for="date">Choose Date</label>
-      <input type="date" id="date" required min="" />
+    <label>Choose Time</label>
+    <input type="time" id="timePicker">
 
-      <label for="time">Choose Time</label>
-      <select id="time" required>
-        <option value="">Select Time</option>
-      </select>
-
-      <button type="submit">Book Appointment</button>
-    </form>
-
-    <div class="success" id="successMsg">✅ Appointment booked successfully!</div>
-    <div class="error" id="errorMsg">❌ Something went wrong. Please try again.</div>
+    <button id="bookBtn">Book Appointment</button>
+    <p id="successMsg" class="success-message" style="display:none;">Appointment booked successfully!</p>
+    <p id="errorMsg" class="error-message" style="display:none;">Something went wrong. Please try again.</p>
   </div>
+  <footer>© 2025 Shear Time | All rights reserved</footer>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getDatabase, ref, push, get, child, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
-      authDomain: "shear-time-portal.firebaseapp.com",
-      databaseURL: "https://shear-time-portal-default-rtdb.firebaseio.com/",
-      projectId: "shear-time-portal",
-      storageBucket: "shear-time-portal.firebasestorage.app",
-      messagingSenderId: "65107230915",
-      appId: "1:65107230915:web:4cdcd3b070744c22ef1ba76"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const params = new URLSearchParams(window.location.search);
-    const barberId = params.get("barber");
-    const pfDate = params.get("date");
-    const pfTime = params.get("time");
-
-    const barberNameEl = document.getElementById("barberName");
-    const serviceSelect = document.getElementById("service");
-    const bookingForm = document.getElementById("bookingForm");
-    const successMsg = document.getElementById("successMsg");
-    const errorMsg = document.getElementById("errorMsg");
-    const dateInput = document.getElementById("date");
-    const timeSelect = document.getElementById("time");
-
-    const today = new Date().toISOString().split("T")[0];
-    dateInput.min = today;
-
-    function pad(n){ return n.toString().padStart(2,"0"); }
-    function buildAllTimeSlots(){
-      const slots = [];
-      for(let h=6; h<=21; h++){
-        for(let m of [0,30]){
-          const d = new Date(2000,0,1,h,m);
-          slots.push(d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}));
-        }
-      }
-      return slots;
-    }
-    function to24h(label){
-      const d = new Date(`2000-01-01 ${label}`);
-      return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-    function toMinutes(hhmm){ const [H,M] = hhmm.split(":").map(Number); return H*60+M; }
-
-    let blocked = [];
-    function loadBlockedForBarber(){
-      if(!barberId) return;
-      onValue(ref(db, `users/${barberId}/blockedTimes`), (snap)=>{
-        blocked = [];
-        if(snap.exists()){
-          const v = snap.val();
-          for(const id in v){ blocked.push(v[id]); }
-        }
-        refreshTimeOptions();
-      });
-    }
-
-    function refreshTimeOptions(){
-      const date = dateInput.value;
-      timeSelect.innerHTML = `<option value="">Select Time</option>`;
-      if(!date) return;
-
-      const all = buildAllTimeSlots();
-      const dayBlockedRanges = blocked
-        .map(b=>({s:new Date(b.startISO), e:new Date(b.endISO)}))
-        .filter(r => r.s.toISOString().slice(0,10) === date || r.e.toISOString().slice(0,10) === date);
-
-      const allowed = all.filter(label=>{
-        const hhmm = to24h(label);
-        const slotStart = new Date(`${date}T${hhmm}:00`);
-        const slotEnd = new Date(slotStart.getTime() + 30*60000);
-        return !dayBlockedRanges.some(r => slotStart < r.e && slotEnd > r.s);
-      });
-
-      if(!allowed.length){
-        const opt = document.createElement("option");
-        opt.textContent = "No times available";
-        timeSelect.appendChild(opt);
-        return;
-      }
-      allowed.forEach(label=>{
-        const opt = document.createElement("option");
-        opt.value = label;
-        opt.textContent = label;
-        timeSelect.appendChild(opt);
-      });
-
-      // If prefilled time exists, auto-select it after options are built
-      if (pfTime){
-        const opt = Array.from(timeSelect.options).find(o => o.textContent === pfTime || o.value === pfTime);
-        if(opt) timeSelect.value = opt.value;
-      }
-    }
-
-    dateInput.addEventListener("change", refreshTimeOptions);
-
-    if(!barberId){
-      barberNameEl.textContent = "Invalid Barber Link";
-      bookingForm.style.display = "none";
-    } else {
-      const dbRef = ref(db);
-      get(child(dbRef, `users/${barberId}/profile`)).then((snapshot)=>{
-        if(snapshot.exists()){
-          const data = snapshot.val();
-          barberNameEl.textContent = data.name
-            ? `${data.name} @ ${data.shopName || "Shear Time"}`
-            : "Shear Time Barber";
-        }
-      });
-      get(child(dbRef, `users/${barberId}/services`)).then((snapshot)=>{
-        serviceSelect.innerHTML = "";
-        if(snapshot.exists()){
-          const services = snapshot.val();
-          Object.values(services).forEach(s=>{
-            const opt = document.createElement("option");
-            opt.value = s.name;
-            opt.textContent = `${s.name} - $${s.price}`;
-            serviceSelect.appendChild(opt);
-          });
-        } else {
-          serviceSelect.innerHTML = "<option>No services available</option>";
-        }
-      });
-      loadBlockedForBarber();
-    }
-
-    // Prefill date/time from URL
-    if (pfDate) dateInput.value = pfDate;
-    const tryPrefill = setInterval(()=>{
-      if(timeSelect.options.length > 1){
-        if (pfTime){
-          const opt = Array.from(timeSelect.options).find(o => o.textContent === pfTime || o.value === pfTime);
-          if(opt) timeSelect.value = opt.value;
-        }
-        clearInterval(tryPrefill);
-      }
-    }, 150);
-
-    bookingForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      successMsg.style.display = "none";
-      errorMsg.style.display = "none";
-
-      const clientName = document.getElementById("clientName").value.trim();
-      const service = document.getElementById("service").value;
-      const date = dateInput.value;
-      const time = timeSelect.value;
-      const datetime = `${date} ${time}`;
-
-      if(!barberId || !clientName || !service || !date || !time){
-        errorMsg.style.display = "block";
-        errorMsg.textContent = "❌ Please fill in all fields.";
-        return;
-      }
-
-      try{
-        await push(ref(db, `users/${barberId}/appointments`), {
-          clientName, service, date: datetime, createdAt: new Date().toISOString()
-        });
-        successMsg.style.display = "block";
-        bookingForm.reset();
-        refreshTimeOptions();
-      }catch(err){
-        console.error(err);
-        errorMsg.style.display = "block";
-      }
-    });
+  <script>
+    // You can add booking logic here later
   </script>
 </body>
 </html>
-
- 
