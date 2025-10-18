@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shear Time | Services</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #8b0000;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .btn {
+      background-color: #b22222;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 8px;
+    }
+
+    .btn:hover {
+      background-color: #8b1a1a;
+    }
+
+    .service-item {
+      background: #f7f7f7;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .service-actions button {
+      background: #ccc;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 8px;
+      margin-left: 5px;
+      cursor: pointer;
+    }
+
+    .service-actions button:hover {
+      background: #aaa;
+    }
+
+    .price {
+      color: #b22222;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" width="80" />
+    <h2>Services</h2>
+
+    <input type="text" id="serviceName" placeholder="Service Name (e.g. Fade, Beard Trim)" />
+    <input type="number" id="servicePrice" placeholder="Price ($)" />
+    <button class="btn" id="addServiceBtn">Add Service</button>
+
+    <h3>Available Services</h3>
+    <div id="serviceList"></div>
+
+    <button class="btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+  </div>
+
+  <!-- ✅ Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
+      authDomain: "shear-time-portal.firebaseapp.com",
+      databaseURL: "https://shear-time-portal-default-rtdb.firebaseio.com/",
+      projectId: "shear-time-portal",
+      storageBucket: "shear-time-portal.firebasestorage.app",
+      messagingSenderId: "65107230915",
+      appId: "1:65107230915:web:4cdcd3b070744c22ef1ba76"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const addServiceBtn = document.getElementById("addServiceBtn");
+    const serviceList = document.getElementById("serviceList");
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        loadServices();
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    function loadServices() {
+      const servicesRef = ref(db, "users/" + currentUser.uid + "/services");
+      onValue(servicesRef, (snapshot) => {
+        const data = snapshot.val();
+        serviceList.innerHTML = "";
+        if (data) {
+          const keys = Object.keys(data);
+          keys.forEach((id) => {
+            const service = data[id];
+            const div = document.createElement("div");
+            div.className = "service-item";
+            div.innerHTML = `
+              <div>
+                <strong>${service.name}</strong><br>
+                <span class="price">$${service.price}</span>
+              </div>
+              <div class="service-actions">
+                <button onclick="editService('${id}', '${service.name}', ${service.price})">Edit</button>
+                <button onclick="deleteService('${id}')">Delete</button>
+              </div>
+            `;
+            serviceList.appendChild(div);
+          });
+        } else {
+          serviceList.innerHTML = "<p>No services added yet.</p>";
+        }
+      });
+    }
+
+    window.deleteService = function (id) {
+      const serviceRef = ref(db, "users/" + currentUser.uid + "/services/" + id);
+      remove(serviceRef);
+    };
+
+    window.editService = function (id, name, price) {
+      document.getElementById("serviceName").value = name;
+      document.getElementById("servicePrice").value = price;
+      addServiceBtn.textContent = "Update Service";
+      addServiceBtn.onclick = async () => {
+        const updated = {
+          name: document.getElementById("serviceName").value,
+          price: parseFloat(document.getElementById("servicePrice").value)
+        };
+        const serviceRef = ref(db, "users/" + currentUser.uid + "/services/" + id);
+        await update(serviceRef, updated);
+        resetForm();
+      };
+    };
+
+    function addService() {
+      const name = document.getElementById("serviceName").value.trim();
+      const price = parseFloat(document.getElementById("servicePrice").value);
+      if (!name || isNaN(price)) return alert("Enter valid name and price.");
+      const servicesRef = ref(db, "users/" + currentUser.uid + "/services");
+      push(servicesRef, { name, price });
+      resetForm();
+    }
+
+    function resetForm() {
+      document.getElementById("serviceName").value = "";
+      document.getElementById("servicePrice").value = "";
+      addServiceBtn.textContent = "Add Service";
+      addServiceBtn.onclick = addService;
+    }
+
+    addServiceBtn.onclick = addService;
+  </script>
+</body>
+</html>
