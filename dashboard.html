@@ -1,88 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shear Time Barber Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo" />
+    <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo">
     <h2>Shear Time Barber Dashboard</h2>
+    <p><strong>Barber</strong></p>
+    <p id="userEmail"></p>
+    <button id="logoutBtn" class="btn">Logout</button>
 
-    <div class="profile-card">
-      <h3>Barber</h3>
-      <p id="userEmail">Loading...</p>
-      <button id="logoutBtn" class="btn red">Logout</button>
-    </div>
-
-    <div class="booking-card">
+    <div class="link-box">
       <h3>My Booking Link</h3>
-      <a id="bookingLink" href="#" target="_blank" class="link-text">Loading...</a>
-      <div class="link-actions">
-        <button id="copyLinkBtn" class="btn small">Copy Link</button>
+      <a id="bookingLink" href="#" target="_blank"></a>
+      <div class="dashboard-buttons">
+        <button id="copyLinkBtn">Copy Link</button>
       </div>
     </div>
 
-    <div class="nav-buttons">
-      <a href="appointments.html" class="btn">Appointments</a>
-      <a href="services.html" class="btn">Services</a>
-      <a href="payments.html" class="btn">Payments</a>
-      <a href="settings.html" class="btn">Settings</a>
+    <div class="dashboard-buttons">
+      <button onclick="window.location.href='appointments.html'">Appointments</button>
+      <button onclick="window.location.href='services.html'">Services</button>
+      <button onclick="window.location.href='payments.html'">Payments</button>
+      <button onclick="window.location.href='settings.html'">Settings</button>
     </div>
+
+    <footer>© 2025 Shear Time | All rights reserved</footer>
   </div>
 
-  <footer>© 2025 Shear Time | All rights reserved</footer>
-
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
     import {
       getAuth,
       onAuthStateChanged,
       signOut,
       setPersistence,
       browserLocalPersistence
-    } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-auth.js";
 
-    // ✅ Correct Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
       authDomain: "shear-time-portal.firebaseapp.com",
       projectId: "shear-time-portal",
       storageBucket: "shear-time-portal.firebasestorage.app",
       messagingSenderId: "65107230915",
-      appId: "1:65107230915:web:4dcd3b07074c22ef1ba76"
+      appId: "1:65107230915:web:4dcd3b070744c22ef1ba76"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+
     await setPersistence(auth, browserLocalPersistence);
 
-    // ✅ Handle user login state
+    const userEmail = document.getElementById('userEmail');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const bookingLink = document.getElementById('bookingLink');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        document.getElementById("userEmail").textContent = user.email;
-        const bookingLink = `https://sheartime-portal.vercel.app/book-public.html?barber=${encodeURIComponent(user.uid)}`;
-        const bookingLinkElement = document.getElementById("bookingLink");
-        bookingLinkElement.textContent = bookingLink;
-        bookingLinkElement.href = bookingLink;
+        userEmail.textContent = user.email;
+        const bookingUrl = `https://sheartime-portal.vercel.app/book-public.html?barber=${user.uid}`;
+        bookingLink.href = bookingUrl;
+        bookingLink.textContent = bookingUrl;
+        copyLinkBtn.onclick = () => navigator.clipboard.writeText(bookingUrl);
       } else {
         window.location.href = "login.html";
       }
     });
 
-    // ✅ Logout button
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "login.html";
-    });
-
-    // ✅ Copy booking link
-    document.getElementById("copyLinkBtn").addEventListener("click", () => {
-      const link = document.getElementById("bookingLink").textContent;
-      navigator.clipboard.writeText(link);
-      alert("Booking link copied!");
+    logoutBtn.addEventListener("click", () => {
+      signOut(auth).then(() => window.location.href = "login.html");
     });
   </script>
 </body>
