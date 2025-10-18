@@ -1,32 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Book Appointment | Shear Time</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: radial-gradient(circle at top, #111 0%, #000 100%);
+      color: #fff;
+      font-family: "Poppins", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .booking-container {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 30px 40px;
+      width: 90%;
+      max-width: 380px;
+      box-shadow: 0 0 25px rgba(255, 0, 0, 0.2);
+      text-align: center;
+    }
+    .logo {
+      width: 90px;
+      margin-bottom: 10px;
+    }
+    h2 {
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    p {
+      color: #ccc;
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 0.95rem;
+    }
+    input,
+    select {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: none;
+      background-color: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 0.95rem;
+    }
+    input:focus,
+    select:focus {
+      outline: none;
+      border: 1px solid #e74c3c;
+    }
+    label {
+      text-align: left;
+      display: block;
+      margin-top: 10px;
+      color: #bbb;
+      font-size: 0.9rem;
+    }
+    button {
+      width: 100%;
+      background: #e74c3c;
+      border: none;
+      color: #fff;
+      padding: 12px;
+      margin-top: 14px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #ff5f47;
+    }
+    .success-message {
+      color: #2ecc71;
+      margin-top: 10px;
+      display: none;
+    }
+    .error-message {
+      color: #e74c3c;
+      margin-top: 10px;
+      display: none;
+    }
+    footer {
+      position: absolute;
+      bottom: 12px;
+      text-align: center;
+      width: 100%;
+      color: #888;
+      font-size: 0.8rem;
+    }
+  </style>
 </head>
 <body>
   <div class="booking-container">
-    <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo" />
     <h2>Shear Time Barber</h2>
     <p>Book your appointment below</p>
 
-    <input type="text" id="clientName" placeholder="Your Name">
+    <input type="text" id="clientName" placeholder="Your Name" />
     <select id="service">
       <option value="cut-$60">Cut - $60</option>
+      <option value="fade-$70">Fade - $70</option>
+      <option value="beard-$40">Beard Trim - $40</option>
     </select>
 
     <label>Choose Date</label>
-    <input type="date" id="datePicker">
+    <input type="date" id="datePicker" />
 
     <label>Choose Time</label>
-    <input type="time" id="timePicker">
+    <input type="time" id="timePicker" />
 
     <button id="bookBtn">Book Appointment</button>
-    <p id="successMsg" class="success-message" style="display:none;">Appointment booked successfully!</p>
-    <p id="errorMsg" class="error-message" style="display:none;">Something went wrong. Please try again.</p>
+
+    <p id="successMsg" class="success-message">Appointment booked successfully!</p>
+    <p id="errorMsg" class="error-message">Something went wrong. Please try again.</p>
   </div>
+
   <footer>© 2025 Shear Time | All rights reserved</footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      set
+    } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
+      authDomain: "shear-time-portal.firebaseapp.com",
+      databaseURL: "https://shear-time-portal-default-rtdb.firebaseio.com/",
+      projectId: "shear-time-portal",
+      storageBucket: "shear-time-portal.firebasestorage.app",
+      messagingSenderId: "65107230915",
+      appId: "1:65107230915:web:4dcd3b070744c22ef1ba76"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const bookBtn = document.getElementById("bookBtn");
+    const successMsg = document.getElementById("successMsg");
+    const errorMsg = document.getElementById("errorMsg");
+
+    bookBtn.addEventListener("click", async () => {
+      const barberId = new URLSearchParams(window.location.search).get("barber");
+      const clientName = document.getElementById("clientName").value;
+      const service = document.getElementById("service").value;
+      const date = document.getElementById("datePicker").value;
+      const time = document.getElementById("timePicker").value;
+
+      if (!clientName || !service || !date || !time) {
+        errorMsg.textContent = "Please fill all fields.";
+        errorMsg.style.display = "block";
+        return;
+      }
+
+      try {
+        const appointmentRef = push(ref(db, `appointments/${barberId}`));
+        await set(appointmentRef, {
+          clientName,
+          service,
+          date,
+          time
+        });
+        successMsg.style.display = "block";
+        errorMsg.style.display = "none";
+      } catch (err) {
+        console.error(err);
+        errorMsg.textContent = "Something went wrong. Please try again.";
+        errorMsg.style.display = "block";
+        successMsg.style.display = "none";
+      }
+    });
+  </script>
 </body>
 </html>
