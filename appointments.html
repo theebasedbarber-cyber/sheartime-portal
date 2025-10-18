@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shear Time | Appointments</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #8b0000;
+    }
+
+    #calendar {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    #calendar th, #calendar td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    #calendar th {
+      background-color: #b22222;
+      color: white;
+    }
+
+    #calendar td {
+      background-color: #f9f9f9;
+      cursor: pointer;
+    }
+
+    #calendar td.booked {
+      background-color: #ff6b6b; /* red for booked days */
+      color: white;
+    }
+
+    .btn {
+      background-color: #b22222;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .btn:hover {
+      background-color: #8b1a1a;
+    }
+
+    .appointment-list {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .appointment-item {
+      border-bottom: 1px solid #ccc;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" width="80" />
+    <h2>Appointments</h2>
+
+    <table id="calendar"></table>
+
+    <div class="appointment-list" id="appointmentList">
+      <h3>Your Appointments</h3>
+      <div id="appointments"></div>
+    </div>
+
+    <button class="btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+  </div>
+
+  <!-- ✅ Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
+      authDomain: "shear-time-portal.firebaseapp.com",
+      databaseURL: "https://shear-time-portal-default-rtdb.firebaseio.com/",
+      projectId: "shear-time-portal",
+      storageBucket: "shear-time-portal.firebasestorage.app",
+      messagingSenderId: "65107230915",
+      appId: "1:65107230915:web:4cdcd3b070744c22ef1ba76"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const calendarEl = document.getElementById("calendar");
+    const appointmentsDiv = document.getElementById("appointments");
+
+    function generateCalendar() {
+      const now = new Date();
+      const month = now.getMonth();
+      const year = now.getFullYear();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+
+      let table = "<tr>";
+      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      days.forEach(day => table += `<th>${day}</th>`);
+      table += "</tr><tr>";
+
+      for (let i = 0; i < firstDay.getDay(); i++) table += "<td></td>";
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const formatted = date.toISOString().split('T')[0];
+        table += `<td id="day-${formatted}">${day}</td>`;
+        if (date.getDay() === 6) table += "</tr><tr>";
+      }
+
+      table += "</tr>";
+      calendarEl.innerHTML = table;
+    }
+
+    function loadAppointments(userId) {
+      const apptRef = ref(db, "users/" + userId + "/appointments");
+      onValue(apptRef, (snapshot) => {
+        const data = snapshot.val();
+        appointmentsDiv.innerHTML = "";
+        if (data) {
+          Object.keys(data).forEach(key => {
+            const appt = data[key];
+            const div = document.createElement("div");
+            div.className = "appointment-item";
+            div.textContent = `${appt.clientName} - ${appt.service} on ${appt.date}`;
+            appointmentsDiv.appendChild(div);
+            const dayCell = document.getElementById("day-" + appt.date);
+            if (dayCell) dayCell.classList.add("booked");
+          });
+        } else {
+          appointmentsDiv.innerHTML = "<p>No appointments found.</p>";
+        }
+      });
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        generateCalendar();
+        loadAppointments(user.uid);
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+</body>
+</html>
