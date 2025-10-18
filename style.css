@@ -1,79 +1,101 @@
-/* ===== Shear Time Global Styles ===== */
+/* ===== Shear Time Global Mobile-First Styling ===== */
 
 body {
-  background-color: #fafafa;
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f3f3f3;
+  font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  color: #222;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
 }
 
-/* ---------- Containers ---------- */
-.container,
-.auth-container,
-.card {
+/* App container (used by dashboard, booking, etc.) */
+.container, .dashboard {
+  width: 92%;
+  max-width: 420px;            /* Perfect mobile width */
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 30px;
-  max-width: 420px;
-  margin: 60px auto;
+  margin: 25px auto;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   text-align: center;
 }
 
-/* ---------- Logo ---------- */
 .logo {
-  width: 100px;
+  width: 80px;
+  margin-bottom: 10px;
+}
+
+h1, h2, h3 {
+  color: #8b0000;
   margin-bottom: 15px;
 }
 
-/* ---------- Headings ---------- */
-h1,
-h2 {
-  color: #b22222; /* Shear Time red */
-  margin-bottom: 20px;
+p {
+  color: #444;
+  font-size: 0.95em;
 }
 
-/* ---------- Inputs ---------- */
-input,
-select {
-  width: 100%;
-  padding: 10px;
-  margin: 8px 0;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 15px;
-}
-
-/* ---------- Buttons ---------- */
-button,
-a.btn {
+/* Buttons */
+.btn, button {
   background-color: #b22222;
   color: #fff;
   border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
+  padding: 12px 15px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: bold;
-  text-decoration: none;
-  display: inline-block;
-  transition: background 0.2s ease-in-out;
+  width: 100%;
+  margin: 6px 0;
+  font-size: 1em;
+  transition: 0.2s ease;
 }
 
-button:hover,
-a.btn:hover {
+.btn:hover, button:hover {
   background-color: #8b1a1a;
+  transform: scale(1.02);
 }
 
-/* ---------- Utility ---------- */
-.forgot-password {
-  margin-top: 15px;
-  display: block;
-  color: #b22222;
-  font-size: 14px;
-  text-decoration: none;
+/* Inputs and selects */
+input, select, textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 1em;
 }
 
-.forgot-password:hover {
-  text-decoration: underline;
+/* Grid buttons (dashboard) */
+.btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+@media (max-width: 480px) {
+  .btn-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Booking confirmation messages */
+.success, .error {
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  font-size: 0.95em;
+}
+
+.success {
+  background: #c9f7c2;
+  color: #155724;
+}
+
+.error {
+  background: #f8d7da;
+  color: #721c24;
 }
