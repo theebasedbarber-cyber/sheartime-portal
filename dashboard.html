@@ -3,36 +3,188 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard | Shear Time</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Shear Time | Barber Dashboard</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    header {
+      background-color: #b22222;
+      color: white;
+      padding: 15px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+    }
+
+    .dashboard-container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 15px;
+    }
+
+    .profile-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    .profile-card h2 {
+      margin: 0 0 10px;
+      color: #b22222;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #b22222;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn:hover { background: #8b1a1a; }
+
+    .share-link-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px auto;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+    }
+
+    .share-link-card h2 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .link-display {
+      word-wrap: break-word;
+      color: #b22222;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    footer {
+      margin-top: 25px;
+      color: #888;
+      font-size: 14px;
+    }
+
+    /* 🧾 QR Modal Styles */
+    #qrModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+    }
+    .qr-modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      width: 300px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      position: relative;
+      animation: fadeIn .2s ease-in;
+    }
+    .qr-modal-content canvas {
+      margin-top: 10px;
+    }
+    .close-btn, .download-btn {
+      background: #b22222;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 15px;
+      margin-top: 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .close-btn:hover, .download-btn:hover { background: #8b1a1a; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
 </head>
+
 <body>
-  <!-- Header -->
-  <header class="app-header">
-    <img src="shear-time-logo.png" alt="Logo" class="header-logo" />
-    Shear Time
+  <header>
+    <h1>Shear Time Barber Dashboard</h1>
   </header>
 
-  <!-- Main Container -->
-  <div class="container">
-    <img src="shear-time-logo.png" alt="Shear Time Logo" width="80" />
-    <h2 id="welcomeText">Welcome to Your Dashboard</h2>
-    <p id="userEmail"></p>
+  <div class="dashboard-container">
+    <!-- Barber Profile -->
+    <section class="profile-card">
+      <h2 id="barberName">Loading Barber...</h2>
+      <p id="barberEmail"></p>
+      <button id="logoutBtn" class="btn">Logout</button>
+    </section>
 
-    <!-- Buttons -->
-    <button class="btn" onclick="goTo('book.html')">Appointments</button>
-    <button class="btn" onclick="goTo('clients.html')">Clients</button>
-    <button class="btn" onclick="goTo('services.html')">Services</button>
-    <button class="btn" onclick="goTo('payments.html')">Payments</button>
-    <button class="btn" onclick="goTo('settings.html')">Settings</button>
+    <!-- 🔗 Share My Booking Link -->
+    <section class="share-link-card">
+      <h2>My Booking Link</h2>
+      <p id="publicLink" class="link-display">Loading link...</p>
 
-    <button id="logoutBtn" class="btn" style="background-color:#555;">Logout</button>
+      <div class="button-group">
+        <button id="copyLinkBtn" class="btn">Copy Link</button>
+        <button id="shareLinkBtn" class="btn">Share Link</button>
+        <button id="qrBtn" class="btn">QR Code</button>
+      </div>
+    </section>
+
+    <!-- Navigation buttons -->
+    <section>
+      <button onclick="window.location.href='appointments.html'" class="btn">Appointments</button>
+      <button onclick="window.location.href='services.html'" class="btn">Services</button>
+      <button onclick="window.location.href='settings.html'" class="btn">Settings</button>
+    </section>
   </div>
 
-  <!-- Firebase + Script -->
+  <footer>
+    © 2025 Shear Time | All rights reserved.
+  </footer>
+
+  <!-- QR Modal -->
+  <div id="qrModal">
+    <div class="qr-modal-content">
+      <h2>Scan to Book</h2>
+      <div id="qrCanvasContainer"></div>
+      <button id="downloadQrBtn" class="download-btn">Download QR Code</button><br>
+      <button id="closeQrBtn" class="close-btn">Close</button>
+    </div>
+  </div>
+
+  <!-- ✅ Firebase + QR Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
@@ -46,28 +198,108 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getDatabase(app);
 
-    const userEmail = document.getElementById("userEmail");
+    const nameEl = document.getElementById("barberName");
+    const emailEl = document.getElementById("barberEmail");
+    const linkEl = document.getElementById("publicLink");
+    const copyBtn = document.getElementById("copyLinkBtn");
+    const shareBtn = document.getElementById("shareLinkBtn");
+    const qrBtn = document.getElementById("qrBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const qrModal = document.getElementById("qrModal");
+    const qrCanvasContainer = document.getElementById("qrCanvasContainer");
+    const closeQrBtn = document.getElementById("closeQrBtn");
+    const downloadQrBtn = document.getElementById("downloadQrBtn");
 
-    // Redirect if not logged in
-    onAuthStateChanged(auth, (user) => {
+    // Load QR generator library
+    const qrScript = document.createElement("script");
+    qrScript.src = "https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js";
+    document.body.appendChild(qrScript);
+
+    let currentQRCanvas = null;
+
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
-        userEmail.textContent = `Logged in as: ${user.email}`;
+        const uid = user.uid;
+        const publicLink = `https://sheartime.vercel.app/book-public.html?barber=${uid}`;
+        linkEl.textContent = publicLink;
+        emailEl.textContent = user.email;
+
+        try {
+          const nameSnap = await get(ref(db, `users/${uid}/profile/name`));
+          nameEl.textContent = nameSnap.exists() ? nameSnap.val() : "Barber";
+        } catch {
+          nameEl.textContent = "Barber";
+        }
+
+        // Copy link
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(publicLink);
+          alert("✅ Link copied to clipboard!");
+        };
+
+        // Share link
+        shareBtn.onclick = () => {
+          if (navigator.share) {
+            navigator.share({
+              title: "Book with Shear Time",
+              text: "Book your next appointment with me:",
+              url: publicLink
+            });
+          } else {
+            navigator.clipboard.writeText(publicLink);
+            alert("✅ Link copied to clipboard!\n" + publicLink);
+          }
+        };
+
+        // QR Modal
+        qrBtn.onclick = () => {
+          qrModal.style.display = "flex";
+          qrCanvasContainer.innerHTML = "";
+          const canvas = document.createElement("canvas");
+          qrCanvasContainer.appendChild(canvas);
+          currentQRCanvas = canvas;
+          new QRious({
+            element: canvas,
+            value: publicLink,
+            size: 200,
+            foreground: "#b22222"
+          });
+        };
+
+        // Download QR Code
+        downloadQrBtn.onclick = () => {
+          if (currentQRCanvas) {
+            const link = document.createElement("a");
+            link.download = "ShearTime_QR.png";
+            link.href = currentQRCanvas.toDataURL("image/png");
+            link.click();
+          }
+        };
+
+        closeQrBtn.onclick = () => {
+          qrModal.style.display = "none";
+        };
+
+        // Close on background click
+        qrModal.addEventListener("click", (e) => {
+          if (e.target === qrModal) qrModal.style.display = "none";
+        });
+
+        // Logout
+        logoutBtn.onclick = () => {
+          signOut(auth).then(() => {
+            alert("Logged out successfully.");
+            window.location.href = "login.html";
+          });
+        };
+
       } else {
+        alert("Please log in first.");
         window.location.href = "login.html";
       }
     });
-
-    // Logout function
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "login.html";
-    });
-
-    // Page navigation
-    window.goTo = (page) => {
-      window.location.href = page;
-    };
   </script>
 </body>
 </html>
