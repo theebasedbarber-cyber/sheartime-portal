@@ -3,122 +3,117 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shear Time | Dashboard</title>
+  <title>Shear Time | Barber Dashboard</title>
   <link rel="stylesheet" href="style.css" />
   <style>
     body {
-      background-color: #f9f9f9;
+      background-color: #f3f3f3;
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
+    }
+
+    .dashboard {
+      max-width: 700px;
+      margin: 60px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       text-align: center;
     }
 
-    .container {
-      max-width: 600px;
-      margin: 50px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-
     .logo {
-      width: 80px;
+      width: 90px;
       margin-bottom: 10px;
     }
 
     h2 {
-      color: #8b1a1a;
-      margin-bottom: 20px;
+      color: #8b0000;
+      margin-bottom: 5px;
     }
 
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+    p {
+      color: #555;
+      margin-top: 0;
     }
 
-    button {
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      margin-top: 25px;
+    }
+
+    .btn {
       background-color: #b22222;
       color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
+      padding: 15px 10px;
+      border-radius: 10px;
       cursor: pointer;
-      margin: 5px;
+      font-weight: bold;
+      font-size: 1em;
+      transition: 0.2s;
     }
 
-    button:hover {
+    .btn:hover {
       background-color: #8b1a1a;
+      transform: scale(1.05);
     }
 
-    .appointment {
-      border-bottom: 1px solid #ddd;
-      padding: 8px 0;
-      text-align: left;
+    .share-link {
+      margin-top: 25px;
+      background: #444;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
     }
 
-    .service-admin {
-      margin-top: 30px;
-      border-top: 1px solid #ccc;
-      padding-top: 20px;
+    .share-link:hover {
+      background: #000;
     }
 
-    .service-admin input {
-      width: 70%;
-      display: inline-block;
+    .logout {
+      margin-top: 25px;
+      background: #ccc;
+      color: #333;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
     }
 
-    .service-admin button {
-      width: 25%;
-      display: inline-block;
+    .logout:hover {
+      background: #999;
     }
-
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="dashboard">
     <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo" />
-    <h2>Welcome to Your Dashboard</h2>
-    <p id="userEmail"></p>
+    <h2 id="barberName">Welcome, Barber</h2>
+    <p id="shopName">Shear Time Portal</p>
 
-    <h3>Book a New Appointment</h3>
-    <input type="text" id="clientName" placeholder="Client Name" />
-
-    <!-- Dynamic service dropdown -->
-    <select id="serviceSelect">
-      <option value="">Loading services...</option>
-    </select>
-
-    <input type="datetime-local" id="appointmentTime" />
-    <button id="saveBtn">Save Appointment</button>
-
-    <h3>Appointments</h3>
-    <div>
-      <button id="showMine">My Appointments</button>
-      <button id="showAll">All Appointments</button>
+    <div class="btn-grid">
+      <button class="btn" onclick="window.location.href='appointments.html'">Appointments</button>
+      <button class="btn" onclick="window.location.href='clients.html'">Clients</button>
+      <button class="btn" onclick="window.location.href='services.html'">Services</button>
+      <button class="btn" onclick="window.location.href='payments.html'">Payments</button>
+      <button class="btn" onclick="window.location.href='settings.html'">Settings</button>
     </div>
 
-    <div id="appointmentsList"></div>
-
-    <!-- Service Admin (add services dynamically) -->
-    <div class="service-admin">
-      <h3>Manage Services</h3>
-      <input type="text" id="newService" placeholder="Add new service" />
-      <button id="addServiceBtn">Add</button>
-      <div id="serviceList"></div>
-    </div>
-
-    <button id="logoutBtn">Logout</button>
+    <button class="share-link" id="shareLinkBtn">📤 Share Booking Link</button>
+    <button class="logout" id="logoutBtn">Logout</button>
   </div>
 
+  <!-- ✅ Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-    import { getDatabase, ref, push, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
@@ -127,149 +122,50 @@
       projectId: "shear-time-portal",
       storageBucket: "shear-time-portal.firebasestorage.app",
       messagingSenderId: "65107230915",
-      appId: "1:65107230915:web:4cdcd3b07d44c22ef1ba76"
+      appId: "1:65107230915:web:4cdcd3b070744c22ef1ba76"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    const userEmail = document.getElementById("userEmail");
-    const appointmentsList = document.getElementById("appointmentsList");
-    const clientName = document.getElementById("clientName");
-    const appointmentTime = document.getElementById("appointmentTime");
-    const serviceSelect = document.getElementById("serviceSelect");
-    const newService = document.getElementById("newService");
-    const serviceList = document.getElementById("serviceList");
-
-    const saveBtn = document.getElementById("saveBtn");
-    const showMineBtn = document.getElementById("showMine");
-    const showAllBtn = document.getElementById("showAll");
-    const addServiceBtn = document.getElementById("addServiceBtn");
+    const barberNameEl = document.getElementById("barberName");
+    const shopNameEl = document.getElementById("shopName");
+    const shareLinkBtn = document.getElementById("shareLinkBtn");
     const logoutBtn = document.getElementById("logoutBtn");
 
     let currentUser = null;
 
-    // AUTH
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
-        userEmail.textContent = "Logged in as: " + user.email;
-        loadServices();
-        loadUserAppointments(user.uid);
+
+        // Load profile info
+        const profileRef = ref(db, "users/" + user.uid + "/profile");
+        const snapshot = await get(profileRef);
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          barberNameEl.textContent = data.name || "Welcome, Barber";
+          shopNameEl.textContent = data.shopName || "Shear Time Portal";
+        } else {
+          barberNameEl.textContent = "Welcome, Barber";
+          shopNameEl.textContent = "Shear Time Portal";
+        }
+
+        // Handle share link
+        const bookingLink = `${window.location.origin}/book.html?barber=${user.uid}`;
+        shareLinkBtn.addEventListener("click", () => {
+          navigator.clipboard.writeText(bookingLink);
+          alert("📋 Booking link copied:\n" + bookingLink);
+        });
       } else {
         window.location.href = "login.html";
       }
     });
 
-    // SAVE appointment
-    saveBtn.addEventListener("click", () => {
-      if (!currentUser) return alert("Not logged in");
-      const name = clientName.value.trim();
-      const service = serviceSelect.value.trim();
-      const time = appointmentTime.value.trim();
-
-      if (!name || !service || !time) {
-        alert("Please fill all fields (name, service, time).");
-        return;
-      }
-
-      const appointmentRef = ref(db, "appointments/");
-      push(appointmentRef, {
-        barberId: currentUser.uid,
-        barberEmail: currentUser.email,
-        clientName: name,
-        service: service,
-        appointmentTime: time
-      });
-
-      alert("Appointment saved!");
-      clientName.value = "";
-      appointmentTime.value = "";
-      loadUserAppointments(currentUser.uid);
-    });
-
-    // LOAD services (dynamic dropdown)
-    function loadServices() {
-      const serviceRef = ref(db, "services/");
-      onValue(serviceRef, (snapshot) => {
-        serviceSelect.innerHTML = "";
-        serviceList.innerHTML = "";
-        if (!snapshot.exists()) {
-          serviceSelect.innerHTML = '<option value="">No services found</option>';
-          return;
-        }
-        snapshot.forEach((child) => {
-          const id = child.key;
-          const service = child.val();
-          const option = document.createElement("option");
-          option.value = service;
-          option.textContent = service;
-          serviceSelect.appendChild(option);
-
-          // Display service under Manage Services
-          const div = document.createElement("div");
-          div.textContent = "• " + service;
-          serviceList.appendChild(div);
-        });
-      });
-    }
-
-    // ADD new service
-    addServiceBtn.addEventListener("click", () => {
-      const newSvc = newService.value.trim();
-      if (!newSvc) return alert("Enter a service name first!");
-      push(ref(db, "services/"), newSvc);
-      newService.value = "";
-    });
-
-    // LOAD current barber’s appointments
-    function loadUserAppointments(uid) {
-      const userQuery = query(ref(db, "appointments/"), orderByChild("barberId"), equalTo(uid));
-      onValue(userQuery, (snapshot) => {
-        displayAppointments(snapshot);
-      });
-    }
-
-    // SHOW all appointments
-    showAllBtn.addEventListener("click", () => {
-      onValue(ref(db, "appointments/"), (snapshot) => {
-        displayAppointments(snapshot);
-      });
-    });
-
-    // SHOW mine
-    showMineBtn.addEventListener("click", () => {
-      if (currentUser) loadUserAppointments(currentUser.uid);
-    });
-
-    // DISPLAY appointments
-    function displayAppointments(snapshot) {
-      appointmentsList.innerHTML = "";
-      if (!snapshot.exists()) {
-        appointmentsList.innerHTML = "<p>No appointments found.</p>";
-        return;
-      }
-
-      snapshot.forEach((child) => {
-        const data = child.val();
-        const div = document.createElement("div");
-        div.className = "appointment";
-        div.innerHTML = `
-          <strong>${data.clientName}</strong><br/>
-          Service: ${data.service}<br/>
-          Time: ${new Date(data.appointmentTime).toLocaleString()}<br/>
-          Barber: ${data.barberEmail}
-        `;
-        appointmentsList.appendChild(div);
-      });
-    }
-
-    // LOGOUT
-    logoutBtn.addEventListener("click", () => {
-      signOut(auth).then(() => {
-        window.location.href = "login.html";
-      });
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
     });
   </script>
 </body>
