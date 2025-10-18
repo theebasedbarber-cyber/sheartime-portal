@@ -1,93 +1,69 @@
-/* ===== Shear Time Global Mobile-First Styling ===== */
-
+/* --- Global App Layout --- */
 body {
-  background-color: #f3f3f3;
-  font-family: Arial, sans-serif;
+  background: #f3f3f3;
   margin: 0;
-  padding: 0;
+  font-family: Arial, sans-serif;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  min-height: 100vh;
 }
 
-/* App container (used by dashboard, booking, etc.) */
-.container, .dashboard {
-  width: 92%;
-  max-width: 420px;            /* Perfect mobile width */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 55px;
+  background: #b22222;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2em;
+  z-index: 10;
+}
+
+.header-logo {
+  width: 30px;
+  margin-right: 8px;
+}
+
+.container {
+  margin-top: 80px;
+  width: 95%;
+  max-width: 380px;
   background: #fff;
-  margin: 25px auto;
-  padding: 25px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
-.logo {
-  width: 80px;
-  margin-bottom: 10px;
-}
-
-h1, h2, h3 {
-  color: #8b0000;
-  margin-bottom: 15px;
-}
-
-p {
-  color: #444;
-  font-size: 0.95em;
-}
-
-/* Buttons */
-.btn, button {
+/* --- Buttons --- */
+button, .btn {
   background-color: #b22222;
-  color: #fff;
+  color: white;
   border: none;
-  padding: 12px 15px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1em;
+  margin-top: 12px;
   cursor: pointer;
   font-weight: bold;
   width: 100%;
-  margin: 6px 0;
-  font-size: 1em;
-  transition: 0.2s ease;
 }
 
-.btn:hover, button:hover {
+button:hover, .btn:hover {
   background-color: #8b1a1a;
-  transform: scale(1.02);
 }
 
-/* Inputs and selects */
-input, select, textarea {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 1em;
-}
-
-/* Grid buttons (dashboard) */
-.btn-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-@media (max-width: 480px) {
-  .btn-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Booking confirmation messages */
+/* --- Alerts --- */
 .success, .error {
   padding: 10px;
-  margin-top: 10px;
   border-radius: 8px;
-  font-size: 0.95em;
+  margin-top: 12px;
+  font-size: 0.9em;
+  display: none;
 }
 
 .success {
@@ -98,4 +74,38 @@ input, select, textarea {
 .error {
   background: #f8d7da;
   color: #721c24;
+}
+
+/* --- Inputs --- */
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 0.95em;
+}
+
+/* --- Labels --- */
+label {
+  display: block;
+  text-align: left;
+  font-weight: bold;
+  color: #333;
+  margin-top: 8px;
+  font-size: 0.9em;
+}
+
+/* --- Responsive --- */
+@media (max-width: 420px) {
+  .container {
+    margin-top: 70px;
+    padding: 16px;
+  }
+  .header-logo {
+    width: 26px;
+  }
+  .app-header {
+    font-size: 1em;
+  }
 }
