@@ -12,22 +12,24 @@
     <h2>Shear Time Barber Dashboard</h2>
     <p><strong>Barber</strong></p>
     <p id="userEmail"></p>
-    <button id="logoutBtn" class="btn">Logout</button>
 
-    <div class="link-box">
-      <h3>My Booking Link</h3>
-      <a id="bookingLink" href="#" target="_blank"></a>
-      <div class="dashboard-buttons">
-        <button id="copyLinkBtn">Copy Link</button>
-      </div>
-    </div>
-
-    <div class="dashboard-buttons">
+    <!-- Top Button Grid -->
+    <div class="dashboard-buttons top-buttons">
       <button onclick="window.location.href='appointments.html'">Appointments</button>
       <button onclick="window.location.href='services.html'">Services</button>
       <button onclick="window.location.href='payments.html'">Payments</button>
       <button onclick="window.location.href='settings.html'">Settings</button>
     </div>
+
+    <!-- Booking Link Section -->
+    <div class="link-box">
+      <h3>My Booking Link</h3>
+      <a id="bookingLink" href="#" target="_blank"></a>
+      <button id="copyLinkBtn">Copy Link</button>
+    </div>
+
+    <!-- Logout Button -->
+    <button id="logoutBtn" class="btn logout-btn">Logout</button>
 
     <footer>© 2025 Shear Time | All rights reserved</footer>
   </div>
@@ -53,7 +55,6 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-
     await setPersistence(auth, browserLocalPersistence);
 
     const userEmail = document.getElementById('userEmail');
