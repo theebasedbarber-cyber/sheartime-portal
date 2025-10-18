@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Availability | Shear Time</title>
+  <style>
+    :root {
+      --red: #e74c3c;
+      --red2: #ff6150;
+      --bg: #0f0f10;
+      --panel: #19191b;
+      --muted: #bfbfbf;
+      --line: rgba(255,255,255,.12);
+      --txt: #fff;
+    }
+    body {
+      margin: 0;
+      font-family: Poppins, system-ui, sans-serif;
+      background: radial-gradient(circle at top, #111 0%, #000 100%);
+      color: var(--txt);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    .wrap {
+      width: 100%;
+      max-width: 600px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 0 28px rgba(255, 0, 0, .25);
+      padding: 20px;
+    }
+    h2 {
+      margin-top: 0;
+      text-align: center;
+      font-weight: 700;
+    }
+    label {
+      display: block;
+      margin: 8px 0 4px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      outline: none;
+    }
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--red);
+      color: #fff;
+      margin-top: 10px;
+    }
+    button:hover { background: var(--red2); }
+    .ghost {
+      background: rgba(255,255,255,.12);
+    }
+    .ghost:hover {
+      background: rgba(255,255,255,.18);
+    }
+    .block-list {
+      margin-top: 20px;
+    }
+    .item {
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: .9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Set Your Hours & Time Off</h2>
+
+    <section>
+      <h3>Default Hours</h3>
+      <label>Start Time</label>
+      <input type="time" id="startTime" value="08:00" />
+      <label>End Time</label>
+      <input type="time" id="endTime" value="20:00" />
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button id="saveHours">💾 Save Hours</button>
+        <button id="resetHours" class="ghost">🔄 Reset to 8–8</button>
+      </div>
+    </section>
+
+    <hr style="margin:20px 0; border:0; border-top:1px solid var(--line)">
+
+    <section>
+      <h3>Block Off a Day or Time</h3>
+      <label>Date</label>
+      <input type="date" id="blockDate" />
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <div style="flex:1">
+          <label>Start (optional)</label>
+          <input type="time" id="blockStart" />
+        </div>
+        <div style="flex:1">
+          <label>End (optional)</label>
+          <input type="time" id="blockEnd" />
+        </div>
+      </div>
+      <button id="addBlock">➕ Add Block</button>
+    </section>
+
+    <section class="block-list">
+      <h3>Your Blocked Times</h3>
+      <div id="blockList"></div>
+    </section>
+
+    <button class="ghost" onclick="window.location.href='appointments.html'">← Back to Appointments</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import {
+      getFirestore, doc, setDoc, getDoc, addDoc, deleteDoc, collection, onSnapshot, orderBy, query
+    } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyATJ7J9wig1gcQPtc5PgwiU1krP8cs_Tj-M",
+      authDomain: "shear-time-86b38.firebaseapp.com",
+      projectId: "shear-time-86b38",
+      storageBucket: "shear-time-86b38.firebasestorage.app",
+      messagingSenderId: "335604759855",
+      appId: "1:335604759855:web:03ea774f849224e63575da"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const startTime = document.getElementById('startTime');
+    const endTime = document.getElementById('endTime');
+    const saveHours = document.getElementById('saveHours');
+    const resetHours = document.getElementById('resetHours');
+    const blockDate = document.getElementById('blockDate');
+    const blockStart = document.getElementById('blockStart');
+    const blockEnd = document.getElementById('blockEnd');
+    const addBlock = document.getElementById('addBlock');
+    const blockList = document.getElementById('blockList');
+
+    let uid = null;
+
+    function renderBlocks(blocks) {
+      blockList.innerHTML = '';
+      if (!blocks.length) {
+        blockList.innerHTML = `<p class="muted">No blocked times.</p>`;
+        return;
+      }
+      blocks.forEach(b => {
+        const el = document.createElement('div');
+        el.className = 'item';
+        const label = b.start && b.end ? `${b.start}–${b.end}` : 'All Day';
+        el.innerHTML = `
+          <div>
+            <div>${new Date(b.date).toLocaleDateString()}</div>
+            <div class="muted">${label}</div>
+          </div>
+          <button data-id="${b.id}" class="ghost">Remove</button>
+        `;
+        el.querySelector('button').addEventListener('click', async () => {
+          if (confirm('Remove this blocked time?')) {
+            await deleteDoc(doc(db, 'appointments', uid, 'blockedTimes', b.id));
+          }
+        });
+        blockList.appendChild(el);
+      });
+    }
+
+    function watchBlocks() {
+      const q = query(collection(db, 'appointments', uid, 'blockedTimes'), orderBy('date'));
+      onSnapshot(q, snap => {
+        const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderBlocks(arr);
+      });
+    }
+
+    async function loadDefault() {
+      const ref = doc(db, 'appointments', uid, 'availability', 'default');
+      const s = await getDoc(ref);
+      if (s.exists()) {
+        const d = s.data();
+        if (d.start) startTime.value = d.start;
+        if (d.end) endTime.value = d.end;
+      } else {
+        // initialize with 8–8 default if first time
+        await setDoc(ref, { start: '08:00', end: '20:00' });
+      }
+    }
+
+    saveHours.addEventListener('click', async () => {
+      await setDoc(doc(db, 'appointments', uid, 'availability', 'default'), {
+        start: startTime.value,
+        end: endTime.value
+      });
+      alert('Default hours saved.');
+    });
+
+    resetHours.addEventListener('click', async () => {
+      if (!confirm('Reset default hours back to 8AM–8PM?')) return;
+      startTime.value = '08:00';
+      endTime.value = '20:00';
+      await setDoc(doc(db, 'appointments', uid, 'availability', 'default'), {
+        start: '08:00', end: '20:00'
+      });
+      alert('Default hours reset to 8AM–8PM.');
+    });
+
+    addBlock.addEventListener('click', async () => {
+      const date = blockDate.value;
+      const start = blockStart.value;
+      const end = blockEnd.value;
+      if (!date) { alert('Pick a date.'); return; }
+      await addDoc(collection(db, 'appointments', uid, 'blockedTimes'), {
+        date, start: start || 'All Day', end: end || 'All Day'
+      });
+      blockDate.value = ''; blockStart.value = ''; blockEnd.value = '';
+    });
+
+    onAuthStateChanged(auth, user => {
+      if (!user) { window.location = 'login.html'; return; }
+      uid = user.uid;
+      loadDefault();
+      watchBlocks();
+    });
+  </script>
+</body>
+</html>
