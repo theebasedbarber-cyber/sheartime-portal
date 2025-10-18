@@ -1,81 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shear Time Barber Dashboard</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: radial-gradient(circle at top, #0d0d0d, #111);
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #1b1b1b;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 25px rgba(255, 0, 0, 0.2);
+      text-align: center;
+      width: 100%;
+      max-width: 420px;
+    }
+    .logo {
+      width: 90px;
+      margin-bottom: 15px;
+    }
+    h2 {
+      margin-bottom: 5px;
+      color: #ff4444;
+    }
+    .role {
+      font-size: 14px;
+      color: #ccc;
+    }
+    button, .link-btn {
+      display: inline-block;
+      background: #ff4444;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 15px;
+      margin: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+    button:hover, .link-btn:hover {
+      background: #d32f2f;
+    }
+    .booking-section {
+      margin-top: 15px;
+      background: #222;
+      border-radius: 10px;
+      padding: 15px;
+    }
+    .booking-link {
+      color: #4ea3ff;
+      font-size: 13px;
+      word-wrap: break-word;
+      display: block;
+      margin: 10px 0;
+    }
+    footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #777;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo">
+  <div class="card">
+    <img src="shear-time-logo.png" class="logo" alt="Shear Time Logo">
     <h2>Shear Time Barber Dashboard</h2>
-    <p><strong>Barber</strong></p>
+    <div class="role">Barber</div>
     <p id="userEmail"></p>
 
-    <!-- Top Button Grid -->
-    <div class="dashboard-buttons top-buttons">
-      <button onclick="window.location.href='appointments.html'">Appointments</button>
-      <button onclick="window.location.href='services.html'">Services</button>
-      <button onclick="window.location.href='payments.html'">Payments</button>
-      <button onclick="window.location.href='settings.html'">Settings</button>
+    <!-- Buttons Top -->
+    <div>
+      <a href="appointments.html" class="link-btn">Appointments</a>
+      <a href="services.html" class="link-btn">Services</a>
+      <a href="payments.html" class="link-btn">Payments</a>
+      <a href="settings.html" class="link-btn">Settings</a>
     </div>
 
-    <!-- Booking Link Section -->
-    <div class="link-box">
+    <!-- Booking link box -->
+    <div class="booking-section">
       <h3>My Booking Link</h3>
-      <a id="bookingLink" href="#" target="_blank"></a>
-      <button id="copyLinkBtn">Copy Link</button>
+      <a id="bookingLink" href="#" target="_blank" class="booking-link"></a>
+      <button id="copyLink">Copy Link</button>
     </div>
 
-    <!-- Logout Button -->
-    <button id="logoutBtn" class="btn logout-btn">Logout</button>
+    <!-- Logout -->
+    <button id="logoutBtn">Logout</button>
 
     <footer>© 2025 Shear Time | All rights reserved</footer>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut,
-      setPersistence,
-      browserLocalPersistence
+    import { 
+      getAuth, 
+      onAuthStateChanged, 
+      signOut, 
+      setPersistence, 
+      browserLocalPersistence 
     } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-auth.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
-      authDomain: "shear-time-portal.firebaseapp.com",
-      projectId: "shear-time-portal",
-      storageBucket: "shear-time-portal.firebasestorage.app",
-      messagingSenderId: "65107230915",
-      appId: "1:65107230915:web:4dcd3b070744c22ef1ba76"
+      apiKey: "AIzaSyATJ7J9wig1gcQPtc5PgwiU1krP8cs_Tj-M",
+      authDomain: "shear-time-86b38.firebaseapp.com",
+      projectId: "shear-time-86b38",
+      storageBucket: "shear-time-86b38.firebasestorage.app",
+      messagingSenderId: "335604759855",
+      appId: "1:335604759855:web:03ea774f849224e63575da"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+
+    // keep session
     await setPersistence(auth, browserLocalPersistence);
 
-    const userEmail = document.getElementById('userEmail');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const bookingLink = document.getElementById('bookingLink');
-    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const userEmail = document.getElementById("userEmail");
+    const bookingLink = document.getElementById("bookingLink");
+    const copyLink = document.getElementById("copyLink");
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
         userEmail.textContent = user.email;
-        const bookingUrl = `https://sheartime-portal.vercel.app/book-public.html?barber=${user.uid}`;
-        bookingLink.href = bookingUrl;
-        bookingLink.textContent = bookingUrl;
-        copyLinkBtn.onclick = () => navigator.clipboard.writeText(bookingUrl);
+        const barberUID = user.uid;
+        const link = `https://sheartime-portal.vercel.app/book-public.html?uid=${barberUID}`;
+        bookingLink.textContent = link;
+        bookingLink.href = link;
+        copyLink.onclick = () => {
+          navigator.clipboard.writeText(link);
+          copyLink.textContent = "Copied!";
+          setTimeout(() => (copyLink.textContent = "Copy Link"), 2000);
+        };
       } else {
         window.location.href = "login.html";
       }
     });
 
-    logoutBtn.addEventListener("click", () => {
-      signOut(auth).then(() => window.location.href = "login.html");
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
     });
   </script>
 </body>
