@@ -5,85 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Book Appointment | Shear Time</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    body {
-      background-color: #f3f3f3;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    .container {
-      max-width: 500px;
-      margin: 40px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-
-    img {
-      width: 90px;
-      margin-bottom: 10px;
-    }
-
-    h2 {
-      color: #8b0000;
-      margin-bottom: 10px;
-    }
-
-    label {
-      display: block;
-      text-align: left;
-      margin-top: 12px;
-      font-weight: bold;
-      color: #333;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    button {
-      margin-top: 20px;
-      background-color: #b22222;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 20px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    button:hover {
-      background-color: #8b1a1a;
-    }
-
-    .success {
-      background: #c9f7c2;
-      color: #155724;
-      padding: 10px;
-      margin-top: 15px;
-      border-radius: 6px;
-      display: none;
-    }
-
-    .error {
-      background: #f8d7da;
-      color: #721c24;
-      padding: 10px;
-      margin-top: 15px;
-      border-radius: 6px;
-      display: none;
-    }
-  </style>
 </head>
 <body>
+  <header class="app-header">
+    <img src="shear-time-logo.png" alt="Logo" class="header-logo" />
+    <h1 class="header-title">Shear Time</h1>
+  </header>
+
   <div class="container">
     <img src="shear-time-logo.png" alt="Shear Time Logo" />
     <h2 id="barberName">Shear Time Barber</h2>
@@ -98,8 +26,13 @@
         <option value="">Loading services...</option>
       </select>
 
-      <label for="datetime">Choose Date & Time</label>
-      <input type="datetime-local" id="datetime" required />
+      <label for="date">Choose Date</label>
+      <input type="date" id="date" required min="" />
+
+      <label for="time">Choose Time</label>
+      <select id="time" required>
+        <option value="">Select Time</option>
+      </select>
 
       <button type="submit">Book Appointment</button>
     </form>
@@ -134,13 +67,40 @@
     const bookingForm = document.getElementById("bookingForm");
     const successMsg = document.getElementById("successMsg");
     const errorMsg = document.getElementById("errorMsg");
+    const dateInput = document.getElementById("date");
+    const timeSelect = document.getElementById("time");
+
+    // --- Date + Time Picker Setup ---
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.min = today;
+
+    // Generate 30-minute time slots between 9 AM and 6 PM
+    for (let hour = 9; hour <= 18; hour++) {
+      const hourLabel = hour > 12 ? hour - 12 : hour;
+      const ampm = hour >= 12 ? "PM" : "AM";
+      const slot1 = `${hourLabel.toString().padStart(2,"0")}:00 ${ampm}`;
+      const slot2 = `${hourLabel.toString().padStart(2,"0")}:30 ${ampm}`;
+      if (hour < 18) {
+        [slot1, slot2].forEach((slot) => {
+          const opt = document.createElement("option");
+          opt.value = slot;
+          opt.textContent = slot;
+          timeSelect.appendChild(opt);
+        });
+      } else {
+        const opt = document.createElement("option");
+        opt.value = slot1;
+        opt.textContent = slot1;
+        timeSelect.appendChild(opt);
+      }
+    }
 
     if (!barberId) {
       barberNameEl.textContent = "Invalid Barber Link";
       bookingForm.style.display = "none";
     } else {
-      // Fetch barber profile info
       const dbRef = ref(db);
+      // Load barber name + shop
       get(child(dbRef, "users/" + barberId + "/profile")).then((snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
@@ -150,7 +110,7 @@
         }
       });
 
-      // Load services for that barber
+      // Load available services
       get(child(dbRef, "users/" + barberId + "/services")).then((snapshot) => {
         serviceSelect.innerHTML = "";
         if (snapshot.exists()) {
@@ -162,13 +122,11 @@
             serviceSelect.appendChild(option);
           });
         } else {
-          serviceSelect.innerHTML =
-            "<option value=''>No services available yet</option>";
+          serviceSelect.innerHTML = "<option value=''>No services available yet</option>";
         }
       });
     }
 
-    // Handle form submission
     bookingForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       successMsg.style.display = "none";
@@ -176,7 +134,9 @@
 
       const clientName = document.getElementById("clientName").value.trim();
       const service = document.getElementById("service").value;
-      const datetime = document.getElementById("datetime").value;
+      const date = document.getElementById("date").value;
+      const time = document.getElementById("time").value;
+      const datetime = `${date} ${time}`;
 
       if (!barberId || !clientName || !service || !datetime) {
         errorMsg.style.display = "block";
