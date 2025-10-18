@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shear Time | Clients</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #8b0000;
+      margin-bottom: 20px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .btn {
+      background-color: #b22222;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 8px;
+    }
+
+    .btn:hover {
+      background-color: #8b1a1a;
+    }
+
+    .client-item {
+      background: #f7f7f7;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    .client-actions {
+      text-align: right;
+    }
+
+    .client-actions button {
+      background: #ccc;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 8px;
+      margin-left: 5px;
+      cursor: pointer;
+    }
+
+    .client-actions button:hover {
+      background: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" width="80" />
+    <h2>Clients</h2>
+
+    <input type="text" id="clientName" placeholder="Client Name" />
+    <input type="tel" id="clientPhone" placeholder="Phone Number" />
+    <textarea id="clientNotes" placeholder="Notes"></textarea>
+    <button class="btn" id="addClientBtn">Add Client</button>
+
+    <h3>Saved Clients</h3>
+    <div id="clientList"></div>
+
+    <button class="btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+  </div>
+
+  <!-- ✅ Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
+      authDomain: "shear-time-portal.firebaseapp.com",
+      databaseURL: "https://shear-time-portal-default-rtdb.firebaseio.com/",
+      projectId: "shear-time-portal",
+      storageBucket: "shear-time-portal.firebasestorage.app",
+      messagingSenderId: "65107230915",
+      appId: "1:65107230915:web:4cdcd3b070744c22ef1ba76"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const addClientBtn = document.getElementById("addClientBtn");
+    const clientList = document.getElementById("clientList");
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        loadClients();
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    function loadClients() {
+      const clientsRef = ref(db, "users/" + currentUser.uid + "/clients");
+      onValue(clientsRef, (snapshot) => {
+        const data = snapshot.val();
+        clientList.innerHTML = "";
+        if (data) {
+          Object.keys(data).forEach((id) => {
+            const client = data[id];
+            const div = document.createElement("div");
+            div.className = "client-item";
+            div.innerHTML = `
+              <strong>${client.name}</strong><br>
+              Phone: ${client.phone}<br>
+              Notes: ${client.notes || "None"}
+              <div class="client-actions">
+                <button onclick="editClient('${id}', '${client.name}', '${client.phone}', '${client.notes || ""}')">Edit</button>
+                <button onclick="deleteClient('${id}')">Delete</button>
+              </div>
+            `;
+            clientList.appendChild(div);
+          });
+        } else {
+          clientList.innerHTML = "<p>No clients found.</p>";
+        }
+      });
+    }
+
+    window.deleteClient = function (id) {
+      const clientRef = ref(db, "users/" + currentUser.uid + "/clients/" + id);
+      remove(clientRef);
+    };
+
+    window.editClient = function (id, name, phone, notes) {
+      document.getElementById("clientName").value = name;
+      document.getElementById("clientPhone").value = phone;
+      document.getElementById("clientNotes").value = notes;
+
+      addClientBtn.textContent = "Update Client";
+      addClientBtn.onclick = async () => {
+        const updatedData = {
+          name: document.getElementById("clientName").value,
+          phone: document.getElementById("clientPhone").value,
+          notes: document.getElementById("clientNotes").value
+        };
+        const clientRef = ref(db, "users/" + currentUser.uid + "/clients/" + id);
+        await update(clientRef, updatedData);
+        addClientBtn.textContent = "Add Client";
+        addClientBtn.onclick = addClient;
+        document.getElementById("clientName").value = "";
+        document.getElementById("clientPhone").value = "";
+        document.getElementById("clientNotes").value = "";
+      };
+    };
+
+    function addClient() {
+      const name = document.getElementById("clientName").value.trim();
+      const phone = document.getElementById("clientPhone").value.trim();
+      const notes = document.getElementById("clientNotes").value.trim();
+      if (!name) return alert("Please enter a client name.");
+
+      const clientRef = ref(db, "users/" + currentUser.uid + "/clients");
+      push(clientRef, { name, phone, notes });
+      document.getElementById("clientName").value = "";
+      document.getElementById("clientPhone").value = "";
+      document.getElementById("clientNotes").value = "";
+    }
+
+    addClientBtn.onclick = addClient;
+  </script>
+</body>
+</html>
