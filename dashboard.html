@@ -6,142 +6,124 @@
   <title>Shear Time Barber Dashboard</title>
   <style>
     body {
-      background: radial-gradient(circle at top, #0d0d0d, #111);
+      font-family: "Poppins", sans-serif;
+      background: radial-gradient(circle at top, #0c0c0c 0%, #181818 100%);
       color: #fff;
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
       margin: 0;
-      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding-top: 40px;
     }
-    .card {
-      background: #1b1b1b;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 0 25px rgba(255, 0, 0, 0.25);
+
+    .dashboard-card {
+      background: rgba(30, 30, 30, 0.95);
+      border-radius: 20px;
+      padding: 30px 35px;
       text-align: center;
-      width: 100%;
-      max-width: 420px;
-      display: none; /* Hidden until user loads */
+      width: 400px;
+      box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
     }
-    .logo {
-      width: 90px;
-      margin-bottom: 15px;
+
+    .dashboard-card img {
+      width: 80px;
+      margin-bottom: 10px;
     }
-    h2 {
-      margin-bottom: 5px;
-      color: #ff4444;
+
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 10px;
     }
-    .role {
-      font-size: 14px;
-      color: #ccc;
+
+    h3 {
+      font-weight: 400;
+      color: #bbb;
+      margin-top: 0;
+      margin-bottom: 20px;
     }
-    .top-buttons {
+
+    .email-display {
+      background: #262626;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      color: #ddd;
+      word-wrap: break-word;
+    }
+
+    .nav-buttons {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 10px;
-      margin-top: 15px;
+      gap: 12px;
+      margin-bottom: 20px;
     }
-    .link-btn {
-      flex: 1 1 45%;
-      text-align: center;
-      background: #ff4444;
-      color: #fff;
+
+    .nav-buttons button {
+      background-color: #c0392b;
+      color: white;
       border: none;
+      padding: 12px 20px;
       border-radius: 10px;
-      padding: 12px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: background 0.3s;
-    }
-    .link-btn:hover {
-      background: #d32f2f;
-    }
-    .booking-section {
-      margin-top: 25px;
-      background: #222;
-      border-radius: 10px;
-      padding: 15px;
-    }
-    .booking-section h3 {
-      color: #ff8888;
-      margin-bottom: 8px;
-    }
-    .booking-link {
-      color: #4ea3ff;
-      font-size: 13px;
-      word-wrap: break-word;
-      display: block;
-      margin: 10px 0;
-    }
-    button {
-      background: #ff4444;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 12px 15px;
+      font-size: 1rem;
       cursor: pointer;
-      font-weight: 600;
-      font-size: 15px;
-      margin-top: 8px;
-      transition: background 0.3s;
+      transition: 0.2s;
     }
-    button:hover {
-      background: #d32f2f;
+
+    .nav-buttons button:hover {
+      background-color: #e74c3c;
     }
+
+    #logoutBtn {
+      background-color: #444;
+    }
+
+    #logoutBtn:hover {
+      background-color: #777;
+    }
+
     footer {
-      margin-top: 20px;
-      font-size: 12px;
-      color: #777;
+      text-align: center;
+      margin-top: 40px;
+      color: #666;
+      font-size: 0.85rem;
     }
-    #loading {
-      color: #bbb;
-      font-size: 16px;
+
+    a {
+      color: #ff7066;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
-  <div id="loading">Loading dashboard...</div>
+  <div class="dashboard-card">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" />
+    <h1>Shear Time Barber Dashboard</h1>
+    <h3>Welcome Back</h3>
 
-  <div class="card" id="dashboardCard">
-    <img src="shear-time-logo.png" class="logo" alt="Shear Time Logo">
-    <h2>Shear Time Barber Dashboard</h2>
-    <div class="role">Barber</div>
-    <p id="userEmail"></p>
+    <div class="email-display" id="userEmail">Loading...</div>
 
-    <!-- Buttons on Top -->
-    <div class="top-buttons">
-      <a href="appointments.html" class="link-btn">Appointments</a>
-      <a href="services.html" class="link-btn">Services</a>
-      <a href="payments.html" class="link-btn">Payments</a>
-      <a href="settings.html" class="link-btn">Settings</a>
+    <div class="nav-buttons">
+      <button onclick="location.href='appointments.html'">Appointments</button>
+      <button onclick="location.href='services.html'">Services</button>
+      <button onclick="location.href='payments.html'">Payments</button>
+      <button onclick="location.href='settings.html'">Settings</button>
     </div>
 
-    <!-- Booking link box -->
-    <div class="booking-section">
-      <h3>My Booking Link</h3>
-      <a id="bookingLink" href="#" target="_blank" class="booking-link"></a>
-      <button id="copyLink">Copy Link</button>
-    </div>
-
-    <!-- Logout -->
     <button id="logoutBtn">Logout</button>
-
-    <footer>© 2025 Shear Time | All rights reserved</footer>
   </div>
 
+  <footer>© 2025 Shear Time | All rights reserved</footer>
+
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import {
       getAuth,
       onAuthStateChanged,
-      signOut,
-      setPersistence,
-      browserLocalPersistence
-    } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-auth.js";
+      signOut
+    } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyATJ7J9wig1gcQPtc5PgwiU1krP8cs_Tj-M",
@@ -155,47 +137,20 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Force local session persistence
-    setPersistence(auth, browserLocalPersistence)
-      .then(() => {
-        onAuthStateChanged(auth, (user) => {
-          const loadingDiv = document.getElementById("loading");
-          const dashboardCard = document.getElementById("dashboardCard");
+    // Load user info
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("userEmail").innerText = user.email;
+      } else {
+        window.location.href = "login.html";
+      }
+    });
 
-          if (user) {
-            // Show dashboard
-            loadingDiv.style.display = "none";
-            dashboardCard.style.display = "block";
-
-            document.getElementById("userEmail").textContent = user.email;
-
-            const barberUID = user.uid;
-            const link = `https://sheartime-portal.vercel.app/book-public.html?uid=${barberUID}`;
-            const bookingLink = document.getElementById("bookingLink");
-            bookingLink.textContent = link;
-            bookingLink.href = link;
-
-            document.getElementById("copyLink").addEventListener("click", () => {
-              navigator.clipboard.writeText(link);
-              const copyBtn = document.getElementById("copyLink");
-              copyBtn.textContent = "Copied!";
-              setTimeout(() => (copyBtn.textContent = "Copy Link"), 2000);
-            });
-
-            document.getElementById("logoutBtn").addEventListener("click", async () => {
-              await signOut(auth);
-              window.location.replace("login.html");
-            });
-          } else {
-            // Not logged in → go to login
-            loadingDiv.textContent = "Redirecting to login...";
-            setTimeout(() => window.location.replace("login.html"), 600);
-          }
-        });
-      })
-      .catch((error) => {
-        console.error("Auth persistence error:", error);
-      });
+    // Logout button
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    });
   </script>
 </body>
 </html>
