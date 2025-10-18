@@ -1,218 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Appointment | Shear Time</title>
-  <link rel="stylesheet" href="style.css"/>
-  <style>
-    body { background:#fafafa; }
-    .profile-card {
-      text-align:center; background:white; border-radius:16px;
-      padding:20px; box-shadow:0 2px 8px rgba(0,0,0,.08);
-      margin-bottom:20px;
-    }
-    .profile-card img {
-      width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:10px;
-    }
-    .success-screen {
-      text-align:center; background:white; padding:30px; border-radius:16px;
-      box-shadow:0 2px 10px rgba(0,0,0,.1); display:none;
-    }
-    .success-screen h2 { margin-bottom:10px; color:#155724; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="app-header">
-    <img src="shear-time-logo.png" alt="Logo" class="header-logo"/>
-    Shear Time
-  </header>
+  <div class="booking-container">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo">
+    <h2>Shear Time Barber</h2>
+    <p>Book your appointment below</p>
 
-  <div class="container" id="mainContainer">
-    <div class="profile-card" id="barberProfile">
-      <img id="barberPhoto" src="shear-time-logo.png" alt="Barber"/>
-      <h2 id="barberName">Loading Barber...</h2>
-      <p id="shopName"></p>
-    </div>
+    <input type="text" id="clientName" placeholder="Your Name">
+    <select id="service">
+      <option value="cut-$60">Cut - $60</option>
+    </select>
 
-    <form id="bookingForm">
-      <label for="clientName">Your Name</label>
-      <input type="text" id="clientName" required placeholder="Enter your full name"/>
+    <label>Choose Date</label>
+    <input type="date" id="datePicker">
 
-      <label for="clientEmail">Your Email</label>
-      <input type="email" id="clientEmail" required placeholder="Enter your email"/>
+    <label>Choose Time</label>
+    <input type="time" id="timePicker">
 
-      <label for="service">Select Service</label>
-      <select id="service" required><option>Loading...</option></select>
-
-      <label for="date">Choose Date</label>
-      <input type="date" id="date" required/>
-
-      <label for="time">Choose Time</label>
-      <select id="time" required><option>Select Date First</option></select>
-
-      <button type="submit">Book Appointment</button>
-    </form>
+    <button id="bookBtn">Book Appointment</button>
+    <p id="successMsg" class="success-message" style="display:none;">Appointment booked successfully!</p>
+    <p id="errorMsg" class="error-message" style="display:none;">Something went wrong. Please try again.</p>
   </div>
-
-  <div class="success-screen" id="successScreen">
-    <h2>✅ Appointment Confirmed!</h2>
-    <p>Thank you for booking with <span id="confirmBarber"></span>.</p>
-    <p>Your appointment is set for <span id="confirmDate"></span> at <span id="confirmTime"></span>.</p>
-    <button class="btn" onclick="window.location.reload()">Book Another</button>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getDatabase, ref, get, child, push, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
-      authDomain: "shear-time-portal.firebaseapp.com",
-      databaseURL: "https://shear-time-portal-default-rtdb.firebaseio.com/",
-      projectId: "shear-time-portal",
-      storageBucket: "shear-time-portal.firebasestorage.app",
-      messagingSenderId: "65107230915",
-      appId: "1:65107230915:web:4cdcd3b070744c22ef1ba76"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const params = new URLSearchParams(window.location.search);
-    const barberId = params.get("barber");
-
-    const dateInput = document.getElementById("date");
-    const timeSelect = document.getElementById("time");
-    const serviceSelect = document.getElementById("service");
-    const bookingForm = document.getElementById("bookingForm");
-    const successScreen = document.getElementById("successScreen");
-    const mainContainer = document.getElementById("mainContainer");
-
-    const today = new Date().toISOString().split("T")[0];
-    dateInput.min = today;
-
-    function pad(n){ return n.toString().padStart(2,"0"); }
-    function buildTimes(){
-      const out=[];
-      for(let h=6;h<=21;h++){
-        for(const m of [0,30]){
-          const d=new Date(2000,0,1,h,m);
-          out.push(d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}));
-        }
-      }
-      return out;
-    }
-    function to24h(label){
-      const d=new Date(`2000-01-01 ${label}`);
-      return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
-    let blocked=[], appts=[];
-    async function loadBarber(){
-      if(!barberId){
-        document.getElementById("barberName").textContent="Invalid Link";
-        return;
-      }
-      const dbRef = ref(db);
-      const prof = await get(child(dbRef, `users/${barberId}/profile`));
-      if(prof.exists()){
-        const p=prof.val();
-        document.getElementById("barberName").textContent = p.name || "Shear Time Barber";
-        document.getElementById("shopName").textContent = p.shopName || "";
-        if(p.photoURL) document.getElementById("barberPhoto").src = p.photoURL;
-      }
-
-      const svcSnap = await get(child(dbRef, `users/${barberId}/services`));
-      serviceSelect.innerHTML="";
-      if(svcSnap.exists()){
-        const data=svcSnap.val();
-        Object.values(data).forEach(s=>{
-          const opt=document.createElement("option");
-          opt.value=s.name;
-          opt.textContent=`${s.name} - $${s.price}`;
-          serviceSelect.appendChild(opt);
-        });
-      } else {
-        const opt=document.createElement("option");
-        opt.textContent="No services available";
-        serviceSelect.appendChild(opt);
-      }
-
-      onValue(ref(db, `users/${barberId}/blockedTimes`),(snap)=>{
-        blocked=[];
-        if(snap.exists()) blocked = Object.values(snap.val());
-        refreshTimes();
-      });
-      onValue(ref(db, `users/${barberId}/appointments`),(snap)=>{
-        appts=[];
-        if(snap.exists()) appts = Object.values(snap.val());
-        refreshTimes();
-      });
-    }
-
-    function refreshTimes(){
-      const date=dateInput.value;
-      timeSelect.innerHTML="<option>Select Time</option>";
-      if(!date) return;
-      const all=buildTimes();
-      const filtered=all.filter(label=>{
-        const hhmm=to24h(label);
-        const start=new Date(`${date}T${hhmm}:00`);
-        const end=new Date(start.getTime()+30*60000);
-        // blocked?
-        const blockedHit=blocked.some(b=>{
-          const s=new Date(b.startISO), e=new Date(b.endISO);
-          return start<e && end>s;
-        });
-        if(blockedHit) return false;
-        // already booked?
-        const apptHit=appts.some(a=>{
-          const d=new Date(a.date.includes("AM")||a.date.includes("PM")?a.date: a.date+" "+label);
-          return d.toISOString().slice(0,10)===date && d.getHours()===start.getHours() && d.getMinutes()===start.getMinutes();
-        });
-        return !apptHit;
-      });
-      if(filtered.length===0){
-        const opt=document.createElement("option");
-        opt.textContent="No slots available";
-        timeSelect.appendChild(opt);
-        return;
-      }
-      filtered.forEach(label=>{
-        const opt=document.createElement("option");
-        opt.value=label;
-        opt.textContent=label;
-        timeSelect.appendChild(opt);
-      });
-    }
-
-    dateInput.addEventListener("change", refreshTimes);
-
-    bookingForm.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      const clientName=document.getElementById("clientName").value.trim();
-      const clientEmail=document.getElementById("clientEmail").value.trim();
-      const service=serviceSelect.value;
-      const date=dateInput.value;
-      const time=timeSelect.value;
-      if(!clientName||!clientEmail||!service||!date||!time){
-        return alert("Please complete all fields.");
-      }
-
-      const datetime=`${date} ${time}`;
-      await push(ref(db,`users/${barberId}/appointments`),{
-        clientName,clientEmail,service,date:datetime,createdAt:new Date().toISOString()
-      });
-
-      mainContainer.style.display="none";
-      successScreen.style.display="block";
-      document.getElementById("confirmBarber").textContent=document.getElementById("barberName").textContent;
-      document.getElementById("confirmDate").textContent=date;
-      document.getElementById("confirmTime").textContent=time;
-    });
-
-    loadBarber();
-  </script>
+  <footer>© 2025 Shear Time | All rights reserved</footer>
 </body>
 </html>
