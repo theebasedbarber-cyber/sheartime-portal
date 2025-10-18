@@ -1,63 +1,178 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-  import {
-    getAuth,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    setPersistence,
-    browserLocalPersistence,
-    onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-
-  // ✅ Correct Firebase project (same as dashboard & appointments)
-  const firebaseConfig = {
-    apiKey: "AIzaSyATJ7J9wig1gcQPtc5PgwiU1krP8cs_Tj-M",
-    authDomain: "shear-time-86b38.firebaseapp.com",
-    projectId: "shear-time-86b38",
-    storageBucket: "shear-time-86b38.firebasestorage.app",
-    messagingSenderId: "335604759855",
-    appId: "1:335604759855:web:03ea774f849224e63575da"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-
-  // Keep session between reloads
-  await setPersistence(auth, browserLocalPersistence);
-
-  // If already logged in, send straight to dashboard
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      console.log("Already signed in:", user.email);
-      window.location.href = "dashboard.html";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shear Time Barber Portal</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: radial-gradient(circle at top, #0c0c0c 0%, #181818 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      color: #fff;
     }
-  });
 
-  // Handle Login
-  document.getElementById("loginBtn").addEventListener("click", async () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Login successful!");
-      window.location.href = "dashboard.html";
-    } catch (err) {
-      alert("Error: " + err.message);
-      console.error(err);
+    .login-container {
+      background: rgba(30, 30, 30, 0.95);
+      border-radius: 20px;
+      padding: 40px 35px;
+      text-align: center;
+      width: 360px;
+      box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
     }
-  });
 
-  // Handle Signup
-  document.getElementById("signupBtn").addEventListener("click", async () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      alert("Account created successfully!");
-      window.location.href = "dashboard.html";
-    } catch (err) {
-      alert("Error: " + err.message);
-      console.error(err);
+    .login-container img {
+      width: 80px;
+      margin-bottom: 15px;
     }
-  });
-</script>
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+      background: #262626;
+      color: #fff;
+    }
+
+    input::placeholder {
+      color: #aaa;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      margin-top: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.2s;
+      font-weight: 600;
+    }
+
+    #loginBtn {
+      background-color: #c0392b;
+      color: white;
+    }
+
+    #signupBtn {
+      background-color: #444;
+      color: white;
+    }
+
+    #loginBtn:hover {
+      background-color: #e74c3c;
+    }
+
+    #signupBtn:hover {
+      background-color: #666;
+    }
+
+    footer {
+      position: absolute;
+      bottom: 15px;
+      text-align: center;
+      width: 100%;
+      color: #666;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" />
+    <h1>Shear Time Barber Portal</h1>
+
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+
+    <button id="loginBtn">Login</button>
+    <button id="signupBtn">Create Account</button>
+  </div>
+
+  <footer>© 2025 Shear Time | All rights reserved</footer>
+
+  <!-- Firebase Auth Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      setPersistence,
+      browserLocalPersistence,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+    // ✅ Firebase Config (matches all other pages)
+    const firebaseConfig = {
+      apiKey: "AIzaSyATJ7J9wig1gcQPtc5PgwiU1krP8cs_Tj-M",
+      authDomain: "shear-time-86b38.firebaseapp.com",
+      projectId: "shear-time-86b38",
+      storageBucket: "shear-time-86b38.firebasestorage.app",
+      messagingSenderId: "335604759855",
+      appId: "1:335604759855:web:03ea774f849224e63575da"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Keep login persistent
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            console.log("Already logged in:", user.email);
+            window.location.href = "dashboard.html";
+          }
+        });
+
+        // Login
+        document.getElementById("loginBtn").addEventListener("click", async () => {
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value.trim();
+          try {
+            await signInWithEmailAndPassword(auth, email, password);
+            alert("Login successful!");
+            window.location.href = "dashboard.html";
+          } catch (err) {
+            alert("Error: " + err.message);
+            console.error(err);
+          }
+        });
+
+        // Signup
+        document.getElementById("signupBtn").addEventListener("click", async () => {
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value.trim();
+          try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            alert("Account created successfully!");
+            window.location.href = "dashboard.html";
+          } catch (err) {
+            alert("Error: " + err.message);
+            console.error(err);
+          }
+        });
+      })
+      .catch((err) => {
+        console.error("Persistence setup failed:", err);
+      });
+  </script>
+</body>
+</html>
