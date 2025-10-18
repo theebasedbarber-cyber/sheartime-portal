@@ -1,162 +1,237 @@
-
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Appointments | Shear Time Barber</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
   <style>
+    /* Page shell (uses your premium theme) */
     body {
       margin: 0;
       font-family: "Poppins", sans-serif;
       background: radial-gradient(circle at top, #111 0%, #000 100%);
       color: #fff;
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      justify-content: center;
       min-height: 100vh;
-      padding: 20px;
+      padding: 20px 12px 40px;
+      box-sizing: border-box;
     }
-
     .container {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      box-shadow: 0 0 25px rgba(255, 0, 0, 0.25);
-      width: 95%;
-      max-width: 420px;
-      padding: 25px;
-      text-align: center;
-    }
-
-    .logo {
-      width: 85px;
-      margin-bottom: 10px;
-    }
-
-    h2 {
-      margin: 8px 0 15px;
-      font-weight: 600;
-      color: #fff;
-    }
-
-    .btn {
-      background: #e74c3c;
-      border: none;
-      border-radius: 6px;
-      color: #fff;
-      padding: 10px 16px;
-      font-size: 0.95rem;
-      margin: 5px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    .btn:hover {
-      background: #ff6150;
-    }
-
-    .secondary {
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    input,
-    select {
-      background: rgba(255, 255, 255, 0.1);
-      border: none;
-      color: #fff;
-      border-radius: 6px;
-      padding: 6px;
-      margin: 4px;
-    }
-
-    input[type="time"],
-    input[type="date"] {
-      width: 42%;
-    }
-
-    .calendar,
-    .time-slots {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      padding: 12px;
-      margin-top: 10px;
-      text-align: left;
-    }
-
-    .time-slot {
-      padding: 5px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 0.9rem;
-      color: #ddd;
-    }
-
-    footer {
-      margin-top: 25px;
-      color: #888;
-      font-size: 0.8rem;
-    }
-
-    .dashboard-btn {
-      margin-top: 14px;
-      background: #e74c3c;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 6px;
-      color: #fff;
-      font-weight: 500;
-      cursor: pointer;
       width: 100%;
+      max-width: 980px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      box-shadow: 0 0 25px rgba(255,0,0,0.25);
+      padding: 16px;
     }
 
-    .dashboard-btn:hover {
-      background: #ff5e4a;
+    /* Top bar */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
     }
+    .branding { display: flex; align-items: center; gap: 10px; }
+    .branding .logo { width: 46px; height: 46px; border-radius: 50%; }
+    .branding h2 { margin: 0; font-size: 1.2rem; font-weight: 600; }
+
+    .week-controls { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn, .chip {
+      background: #e74c3c; border: none; border-radius: 8px; color: #fff;
+      padding: 8px 12px; font-size: 0.95rem; cursor: pointer;
+    }
+    .btn.secondary { background: rgba(255,255,255,0.15); }
+    .btn:hover { background: #ff6150; }
+    .chip { background: rgba(255,255,255,0.10); }
+
+    /* Legend */
+    .legend { display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+      margin: 8px 0 14px; font-size: 0.9rem; color: #ddd; }
+    .key { display: inline-flex; align-items: center; gap: 6px; }
+    .dot { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.15); }
+    .available.dot { background: rgba(46,204,113,0.25); border-color: rgba(46,204,113,0.5); }
+    .booked.dot    { background: rgba(231,76,60,0.55);  border-color: rgba(231,76,60,0.9); }
+    .blocked.dot   { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); }
+
+    /* Calendar grid */
+    .calendar-wrap { overflow-x: auto; padding-bottom: 6px; }
+    .calendar {
+      display: grid; grid-template-columns: 120px repeat(7, 1fr);
+      gap: 6px; min-width: 780px;
+    }
+    .cal-header {
+      font-weight: 600; text-align: center; padding: 8px 4px;
+      background: rgba(255,255,255,0.06); border-radius: 8px; color: #f5f5f5;
+      border: 1px solid rgba(255,255,255,0.10); font-size: 0.95rem;
+    }
+    .cal-header:first-child { text-align: left; }
+
+    .time-col, .day-col { display: grid; grid-auto-rows: 48px; gap: 6px; }
+    .time-cell {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; color: #ccc; background: rgba(255,255,255,0.04);
+      border-radius: 8px; border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .slot {
+      border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; font-size: 0.9rem; padding: 4px; cursor: pointer;
+      transition: transform .06s ease, box-shadow .15s ease, background .15s ease;
+      user-select: none; color: #eee;
+    }
+    .slot.available { background: rgba(46,204,113,0.18); }
+    .slot.available:hover { box-shadow: 0 0 0 2px rgba(46,204,113,0.35) inset; transform: translateY(-1px); }
+    .slot.booked    { background: rgba(231,76,60,0.55); }
+    .slot.blocked   { background: rgba(255,255,255,0.10); color: #bbb; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 12px; }
+
+    /* Bottom drawer */
+    .drawer-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      display: none; align-items: flex-end; justify-content: center; z-index: 50;
+    }
+    .drawer {
+      width: 100%; max-width: 680px; background: #1d1d1d; color: #fff;
+      border-top-left-radius: 14px; border-top-right-radius: 14px;
+      box-shadow: 0 -10px 30px rgba(255,0,0,0.25); padding: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .drawer-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .drawer-title { margin: 0; font-size: 1.05rem; }
+    .close-x { background: rgba(255,255,255,0.15); border: none; color: #fff;
+      padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+    .drawer-body { margin-top: 10px; display: grid; gap: 12px; }
+
+    .section {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px; padding: 10px;
+    }
+    .section h4 { margin: 0 0 8px; }
+
+    .list { display: grid; gap: 6px; }
+    .item {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; padding: 8px;
+    }
+    .item strong { color: #fff; }
+
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .row input, .row select {
+      background: rgba(255,255,255,0.12); border: none; color: #fff;
+      border-radius: 6px; padding: 10px; min-width: 140px;
+    }
+    .row .btn { min-width: 120px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="shear-time-logo.png" alt="Shear Time Logo" class="logo" />
-    <h2>Appointments</h2>
-
-    <div>
-      <input type="date" id="blockDate" />
-      <input type="time" id="blockStart" />
-      <input type="time" id="blockEnd" />
-      <button id="blockBtn" class="btn secondary">Block Time</button>
-    </div>
-
-    <div>
-      <input type="time" id="startHour" value="09:00" />
-      <input type="time" id="endHour" value="18:00" />
-      <button id="saveHoursBtn" class="btn">Save Working Hours</button>
-    </div>
-
-    <div class="time-slots">
-      <p><strong>Today's Appointments</strong></p>
-      <div id="appointmentsList">
-        <div class="time-slot">Loading appointments...</div>
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="branding">
+        <img src="shear-time-logo.png" class="logo" alt="Shear Time"/>
+        <h2>Appointments (Week View)</h2>
+      </div>
+      <div class="week-controls">
+        <button id="prevWeek" class="btn secondary">◀ Prev</button>
+        <span id="weekLabel" class="chip">Loading…</span>
+        <button id="nextWeek" class="btn secondary">Next ▶</button>
+        <button id="todayBtn" class="btn">Today</button>
+        <button class="btn" onclick="window.location.href='dashboard.html'">Dashboard</button>
       </div>
     </div>
 
-    <button class="dashboard-btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+    <div class="legend">
+      <span class="key"><span class="dot available"></span>Available</span>
+      <span class="key"><span class="dot booked"></span>Booked</span>
+      <span class="key"><span class="dot blocked"></span>Blocked</span>
+    </div>
+
+    <!-- Calendar -->
+    <div class="calendar-wrap">
+      <div id="calendarGrid" class="calendar"></div>
+    </div>
+
+    <div class="actions">
+      <button id="setHoursBtn" class="btn secondary">Set Working Hours</button>
+      <button id="blockDayBtn" class="btn secondary">Block Entire Day</button>
+    </div>
   </div>
 
-  <footer>© 2025 Shear Time | All rights reserved</footer>
+  <!-- Bottom Drawer (Day Focus) -->
+  <div id="drawerBackdrop" class="drawer-backdrop">
+    <div class="drawer">
+      <div class="drawer-header">
+        <h3 id="drawerTitle" class="drawer-title">Day Focus</h3>
+        <button class="close-x" id="drawerClose">Close</button>
+      </div>
+      <div class="drawer-body">
+        <!-- Appointments List -->
+        <div class="section">
+          <h4>Appointments</h4>
+          <div id="apptList" class="list">
+            <!-- filled by JS -->
+          </div>
+        </div>
 
+        <!-- Add Appointment -->
+        <div class="section">
+          <h4>Add Appointment</h4>
+          <div class="row">
+            <input type="text" id="apClient" placeholder="Client Name"/>
+            <select id="apService">
+              <option value="Haircut">$60 Haircut</option>
+              <option value="Fade">$70 Fade</option>
+              <option value="Beard">$40 Beard Trim</option>
+            </select>
+            <select id="apTime"></select>
+            <button id="addAppt" class="btn">Add</button>
+          </div>
+        </div>
+
+        <!-- Block / Unblock -->
+        <div class="section">
+          <h4>Block / Unblock</h4>
+          <div class="row">
+            <select id="blkMode">
+              <option value="hour">Block Hour</option>
+              <option value="custom">Block Range</option>
+              <option value="day">Block Day</option>
+            </select>
+            <input type="time" id="blkStart"/>
+            <input type="time" id="blkEnd"/>
+            <button id="saveBlock" class="btn secondary">Save Block</button>
+          </div>
+
+          <div style="margin-top:10px;">
+            <div style="margin-bottom:6px; color:#ddd;">Existing Blocks</div>
+            <div id="blkList" class="list">
+              <!-- filled by JS -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align:center; color:#888; font-size:.85rem; margin-top:14px;">
+    © 2025 Shear Time | All rights reserved
+  </footer>
+
+  <!-- Firebase + Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-auth.js";
     import {
-      getDatabase,
-      ref,
-      set,
-      push,
-      get,
-      onValue
+      getDatabase, ref, onValue, get, set, push, remove
     } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-database.js";
 
+    // ✅ Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
       authDomain: "shear-time-portal.firebaseapp.com",
@@ -169,68 +244,334 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getDatabase(app);
+    const db   = getDatabase(app);
 
-    const listContainer = document.getElementById("appointmentsList");
-    const saveHoursBtn = document.getElementById("saveHoursBtn");
-    const blockBtn = document.getElementById("blockBtn");
+    // DOM
+    const grid       = document.getElementById("calendarGrid");
+    const weekLabel  = document.getElementById("weekLabel");
+    const prevWeek   = document.getElementById("prevWeek");
+    const nextWeek   = document.getElementById("nextWeek");
+    const todayBtn   = document.getElementById("todayBtn");
+    const blockDayBtn= document.getElementById("blockDayBtn");
+    const setHoursBtn= document.getElementById("setHoursBtn");
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = "login.html";
+    const drawerBackdrop = document.getElementById("drawerBackdrop");
+    const drawerClose    = document.getElementById("drawerClose");
+    const drawerTitle    = document.getElementById("drawerTitle");
+    const apptList       = document.getElementById("apptList");
+    const apClient       = document.getElementById("apClient");
+    const apService      = document.getElementById("apService");
+    const apTime         = document.getElementById("apTime");
+    const addAppt        = document.getElementById("addAppt");
+    const blkMode        = document.getElementById("blkMode");
+    const blkStart       = document.getElementById("blkStart");
+    const blkEnd         = document.getElementById("blkEnd");
+    const saveBlock      = document.getElementById("saveBlock");
+    const blkList        = document.getElementById("blkList");
+
+    // State
+    let uid = null;
+    let weekStart = getMonday(new Date());
+    let HOURS = { start: "09:00", end: "18:00" }; // default, will be overridden
+    let APPTS = {};   // map: `${date} ${HH:MM}` -> { clientName, service, time, date, _id }
+    let APPTS_BY_DATE = {}; // map date -> array of { ... }
+    let BLOCKS = []; // [{ _id, date, start, end }]
+    let FOCUS_DATE = null;  // YYYY-MM-DD
+
+    // Utils
+    function getMonday(d) {
+      const date = new Date(d);
+      const day = (date.getDay() + 6) % 7; // 0..6 (Mon..Sun)
+      date.setHours(0,0,0,0);
+      date.setDate(date.getDate() - day);
+      return date;
+    }
+    function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+    function fmtISODate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
+    function hourRange(startHHMM, endHHMM) {
+      const [sH] = startHHMM.split(':').map(Number);
+      const [eH] = endHHMM.split(':').map(Number);
+      const out = [];
+      for (let h = sH; h < eH; h++) out.push(String(h).padStart(2,'0') + ":00");
+      return out;
+    }
+    function timeToNumber(hhmm) { return parseInt(hhmm.slice(0,2),10)*60 + parseInt(hhmm.slice(3,5),10); }
+    function overlapsHour(block, hour) {
+      if (block.start === "All Day" || block.end === "All Day") return true;
+      const hM = timeToNumber(hour);
+      const sM = timeToNumber(block.start);
+      const eM = timeToNumber(block.end);
+      return hM >= sM && hM < eM;
+    }
+
+    // Build week grid
+    function renderWeek() {
+      const days = Array.from({length:7}, (_,i)=> addDays(weekStart,i));
+      weekLabel.textContent = `${days[0].toLocaleDateString()} – ${days[6].toLocaleDateString()}`;
+      const hours = hourRange(HOURS.start, HOURS.end);
+
+      grid.innerHTML = "";
+      const headers = ["Time","Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+      headers.forEach(h => {
+        const div = document.createElement("div");
+        div.className = "cal-header";
+        div.textContent = h;
+        grid.appendChild(div);
+      });
+
+      // Time column
+      const timeCol = document.createElement("div");
+      timeCol.className = "time-col";
+      hours.forEach(hr => {
+        const cell = document.createElement("div");
+        cell.className = "time-cell";
+        cell.textContent = hr;
+        timeCol.appendChild(cell);
+      });
+      grid.appendChild(timeCol);
+
+      // Day columns
+      days.forEach(dateObj => {
+        const dateISO = fmtISODate(dateObj);
+        const col = document.createElement("div");
+        col.className = "day-col";
+
+        hours.forEach(hr => {
+          const key = `${dateISO} ${hr}`;
+          const isBooked = !!APPTS[key];
+          const dayBlocks = BLOCKS.filter(b => b.date === dateISO);
+          const isBlocked = dayBlocks.some(b => overlapsHour(b, hr));
+
+          const div = document.createElement("div");
+          div.className = "slot " + (isBooked ? "booked" : isBlocked ? "blocked" : "available");
+          div.dataset.date = dateISO;
+          div.dataset.hour = hr;
+
+          if (isBooked) {
+            const a = APPTS[key];
+            div.textContent = a.clientName || "Booked";
+            div.title = `${a.service || ""} @ ${hr}`;
+          } else if (isBlocked) {
+            div.textContent = "Blocked";
+          } else {
+            div.textContent = "Available";
+          }
+
+          div.addEventListener("click", () => openDrawer(dateISO, hr));
+          col.appendChild(div);
+        });
+
+        grid.appendChild(col);
+      });
+    }
+
+    // Drawer
+    function openDrawer(dateISO, preselectHour=null) {
+      FOCUS_DATE = dateISO;
+      drawerTitle.textContent = `Schedule for ${dateISO}`;
+      drawerBackdrop.style.display = "flex";
+
+      // Fill time dropdown from working hours
+      apTime.innerHTML = "";
+      hourRange(HOURS.start, HOURS.end).forEach(hr => {
+        const opt = document.createElement("option");
+        opt.value = hr; opt.textContent = hr;
+        if (preselectHour && preselectHour === hr) opt.selected = true;
+        apTime.appendChild(opt);
+      });
+
+      renderDayLists();
+    }
+    function closeDrawer(){ drawerBackdrop.style.display = "none"; }
+    drawerClose.addEventListener("click", closeDrawer);
+    drawerBackdrop.addEventListener("click", (e) => {
+      if (e.target === drawerBackdrop) closeDrawer();
+    });
+
+    function renderDayLists() {
+      // Appointments
+      apptList.innerHTML = "";
+      const items = APPTS_BY_DATE[FOCUS_DATE] ? [...APPTS_BY_DATE[FOCUS_DATE]].sort((a,b)=> timeToNumber(a.time)-timeToNumber(b.time)) : [];
+      if (!items.length) {
+        apptList.innerHTML = `<div class="item"><span>No appointments.</span></div>`;
+      } else {
+        items.forEach(a => {
+          const row = document.createElement("div");
+          row.className = "item";
+          row.innerHTML = `<div><strong>${a.time}</strong> — ${a.clientName} (${a.service})</div>`;
+          const del = document.createElement("button");
+          del.className = "btn secondary";
+          del.textContent = "Delete";
+          del.onclick = async () => {
+            if (!confirm("Delete this appointment?")) return;
+            await remove(ref(db, `appointments/${uid}/${a._id}`));
+          };
+          row.appendChild(del);
+          apptList.appendChild(row);
+        });
+      }
+
+      // Blocks
+      blkList.innerHTML = "";
+      const blocks = BLOCKS.filter(b => b.date === FOCUS_DATE);
+      if (!blocks.length) {
+        blkList.innerHTML = `<div class="item"><span>No blocks.</span></div>`;
+      } else {
+        blocks.forEach(b => {
+          const row = document.createElement("div");
+          row.className = "item";
+          const label = (b.start === "All Day" || b.end === "All Day") ? "All Day" : `${b.start} - ${b.end}`;
+          row.innerHTML = `<div><strong>${label}</strong></div>`;
+          const del = document.createElement("button");
+          del.className = "btn secondary";
+          del.textContent = "Unblock";
+          del.onclick = async () => {
+            if (!confirm("Remove this block?")) return;
+            await remove(ref(db, `blocked/${uid}/${b._id}`));
+          };
+          row.appendChild(del);
+          blkList.appendChild(row);
+        });
+      }
+    }
+
+    // Add appointment (manual)
+    addAppt.addEventListener("click", async () => {
+      if (!uid || !FOCUS_DATE) return;
+      const clientName = apClient.value.trim();
+      const service    = apService.value;
+      const time       = apTime.value;
+
+      if (!clientName || !time) {
+        alert("Enter client name and choose a time.");
         return;
       }
 
-      const uid = user.uid;
+      // Disallow booking into blocked or already booked
+      const key = `${FOCUS_DATE} ${time}`;
+      const isBooked = !!APPTS[key];
+      const isBlocked = BLOCKS.filter(b => b.date === FOCUS_DATE).some(b => overlapsHour(b, time));
+      if (isBooked || isBlocked) {
+        alert("That time is not available.");
+        return;
+      }
 
-      // 🔹 Load appointments
-      const apptRef = ref(db, "appointments/" + uid);
-      onValue(apptRef, (snapshot) => {
-        listContainer.innerHTML = "";
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          Object.keys(data).forEach((key) => {
-            const appt = data[key];
-            const div = document.createElement("div");
-            div.className = "time-slot";
-            div.textContent = `${appt.date} - ${appt.time} (${appt.clientName}) - ${appt.service}`;
-            listContainer.appendChild(div);
-          });
-        } else {
-          listContainer.innerHTML = '<div class="time-slot">No appointments yet.</div>';
-        }
-      });
+      const apRef = push(ref(db, `appointments/${uid}`));
+      await set(apRef, { date: FOCUS_DATE, time, clientName, service });
 
-      // 🔹 Save working hours
-      saveHoursBtn.addEventListener("click", async () => {
-        const start = document.getElementById("startHour").value;
-        const end = document.getElementById("endHour").value;
-        await set(ref(db, "hours/" + uid), { start, end });
-        alert("Working hours saved!");
-      });
+      apClient.value = "";
+    });
 
-      // 🔹 Block off specific time or day
-      blockBtn.addEventListener("click", async () => {
-        const date = document.getElementById("blockDate").value;
-        const start = document.getElementById("blockStart").value;
-        const end = document.getElementById("blockEnd").value;
+    // Save block (hour/custom/day)
+    saveBlock.addEventListener("click", async () => {
+      if (!uid || !FOCUS_DATE) return;
+      const mode = blkMode.value;
+      let start = blkStart.value;
+      let end   = blkEnd.value;
 
-        if (!date) {
-          alert("Please select a date to block.");
+      if (mode === "day") {
+        start = "All Day"; end = "All Day";
+      } else if (mode === "hour") {
+        if (!start) start = "09:00";
+        if (!end)   end   = (String(parseInt(start.slice(0,2))+1).padStart(2,'0')) + ":00";
+      } else {
+        if (!start || !end) {
+          alert("Pick a start and end time.");
           return;
         }
+        if (timeToNumber(end) <= timeToNumber(start)) {
+          alert("End must be after start.");
+          return;
+        }
+      }
 
-        await push(ref(db, "blocked/" + uid), {
-          date,
-          start: start || "All Day",
-          end: end || "All Day"
-        });
+      const blkRef = push(ref(db, `blocked/${uid}`));
+      await set(blkRef, { date: FOCUS_DATE, start, end });
+      blkStart.value = ""; blkEnd.value = "";
+    });
 
-        alert("Time blocked off successfully!");
+    // Quick actions
+    blockDayBtn.addEventListener("click", () => {
+      const date = fmtISODate(weekStart); // default to Monday; you can click a day instead
+      openDrawer(date);
+      blkMode.value = "day";
+    });
+
+    setHoursBtn.addEventListener("click", async () => {
+      if (!uid) return;
+      const start = prompt("Start hour (HH:MM)", HOURS.start || "09:00");
+      if (!start) return;
+      const end   = prompt("End hour (HH:MM)",   HOURS.end   || "18:00");
+      if (!end) return;
+      await set(ref(db, `hours/${uid}`), { start, end });
+      alert("Working hours updated.");
+    });
+
+    // Week nav
+    prevWeek.addEventListener("click", ()=> { weekStart = addDays(weekStart, -7); renderWeek(); });
+    nextWeek.addEventListener("click", ()=> { weekStart = addDays(weekStart,  7); renderWeek(); });
+    todayBtn .addEventListener("click", ()=> { weekStart = getMonday(new Date()); renderWeek(); });
+
+    // Watch Firebase data
+    function watchAll() {
+      // Hours
+      onValue(ref(db, `hours/${uid}`), (snap) => {
+        if (snap.exists()) {
+          const { start, end } = snap.val();
+          if (start && end) HOURS = { start, end };
+        } else {
+          HOURS = { start: "09:00", end: "18:00" };
+        }
+        renderWeek();
       });
+
+      // Appointments
+      onValue(ref(db, `appointments/${uid}`), (snap) => {
+        APPTS = {};
+        APPTS_BY_DATE = {};
+        if (snap.exists()) {
+          const data = snap.val();
+          Object.keys(data).forEach(id => {
+            const a = data[id];
+            if (!a.date || !a.time) return;
+            const t = a.time.length === 5 ? a.time : a.time.slice(0,5);
+            const k = `${a.date} ${t}`;
+            APPTS[k] = { ...a, time: t, _id: id };
+            (APPTS_BY_DATE[a.date] ||= []).push({ ...a, time: t, _id: id });
+          });
+        }
+        renderWeek();
+        if (FOCUS_DATE) renderDayLists();
+      });
+
+      // Blocks
+      onValue(ref(db, `blocked/${uid}`), (snap) => {
+        BLOCKS = [];
+        if (snap.exists()) {
+          const data = snap.val();
+          Object.keys(data).forEach(id => {
+            const b = data[id];
+            if (!b.date) return;
+            BLOCKS.push({ _id: id, date: b.date, start: b.start || "All Day", end: b.end || "All Day" });
+          });
+        }
+        renderWeek();
+        if (FOCUS_DATE) renderDayLists();
+      });
+    }
+
+    // Auth gate
+    onAuthStateChanged(auth, (user) => {
+      if (!user) { window.location.href = "login.html"; return; }
+      uid = user.uid;
+      watchAll();
+      renderWeek();
     });
   </script>
 </body>
 </html>
-
- 
