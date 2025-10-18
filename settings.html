@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shear Time | Settings</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #8b0000;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .btn {
+      background-color: #b22222;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 8px;
+    }
+
+    .btn:hover {
+      background-color: #8b1a1a;
+    }
+
+    .link-box {
+      background: #f7f7f7;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      text-align: left;
+      word-wrap: break-word;
+    }
+
+    .small {
+      font-size: 0.9em;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="shear-time-logo.png" alt="Shear Time Logo" width="80" />
+    <h2>Settings</h2>
+
+    <p><strong>Logged in as:</strong> <span id="userEmail"></span></p>
+
+    <input type="text" id="barberName" placeholder="Your Name" />
+    <input type="text" id="shopName" placeholder="Shop Name" />
+    <input type="tel" id="phone" placeholder="Phone Number" />
+
+    <button class="btn" id="saveBtn">Save Profile</button>
+
+    <h3>Client Booking Link</h3>
+    <div class="link-box">
+      <span id="bookingLink">Generating...</span><br>
+      <button class="btn" id="copyLinkBtn">Copy Link</button>
+    </div>
+
+    <button class="btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+    <button class="btn" id="logoutBtn">Logout</button>
+
+    <p class="small">All information is stored securely under your account.</p>
+  </div>
+
+  <!-- ✅ Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfaTpnZw8kJ7br64AmNdFkgtRIXRWS5JQ",
+      authDomain: "shear-time-portal.firebaseapp.com",
+      databaseURL: "https://shear-time-portal-default-rtdb.firebaseio.com/",
+      projectId: "shear-time-portal",
+      storageBucket: "shear-time-portal.firebasestorage.app",
+      messagingSenderId: "65107230915",
+      appId: "1:65107230915:web:4cdcd3b070744c22ef1ba76"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const userEmailEl = document.getElementById("userEmail");
+    const barberNameEl = document.getElementById("barberName");
+    const shopNameEl = document.getElementById("shopName");
+    const phoneEl = document.getElementById("phone");
+    const bookingLinkEl = document.getElementById("bookingLink");
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        userEmailEl.textContent = user.email;
+
+        // Set booking link
+        const bookingURL = `${window.location.origin}/book.html?barber=${user.uid}`;
+        bookingLinkEl.textContent = bookingURL;
+
+        // Load existing profile info
+        const profileRef = ref(db, "users/" + user.uid + "/profile");
+        const snapshot = await get(profileRef);
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          barberNameEl.value = data.name || "";
+          shopNameEl.value = data.shopName || "";
+          phoneEl.value = data.phone || "";
+        }
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    saveBtn.addEventListener("click", async () => {
+      if (!currentUser) return;
+      const data = {
+        name: barberNameEl.value.trim(),
+        shopName: shopNameEl.value.trim(),
+        phone: phoneEl.value.trim()
+      };
+      await set(ref(db, "users/" + currentUser.uid + "/profile"), data);
+      alert("Profile saved successfully!");
+    });
+
+    copyLinkBtn.addEventListener("click", () => {
+      const link = bookingLinkEl.textContent;
+      navigator.clipboard.writeText(link);
+      alert("Booking link copied to clipboard!");
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    });
+  </script>
+</body>
+</html>
